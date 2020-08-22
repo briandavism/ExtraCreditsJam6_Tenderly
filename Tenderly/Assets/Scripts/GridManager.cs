@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using UnityEngine.Assertions;
 
 
 public class GridManager : MonoBehaviour
@@ -11,33 +12,21 @@ public class GridManager : MonoBehaviour
     public Tilemap plantTiles;
 
     // Private variables
-    private Vector3Int[] cube_directions = {new Vector3Int(+1, -1, 0), new Vector3Int(+1, 0, -1),
-                                            new Vector3Int(0, +1, -1), new Vector3Int(-1, +1, 0),
-                                            new Vector3Int(-1, 0, +1), new Vector3Int(0, -1, +1)};
+    private Vector3Int[] cubeDirections = {new Vector3Int(0, +1, -1),  // NW
+                                            new Vector3Int(+1, 0, -1),  // NE
+                                            new Vector3Int(+1, -1, 0),  // E
+                                            new Vector3Int(0, -1, +1),  // SE
+                                            new Vector3Int(-1, 0, +1),  // SW
+                                            new Vector3Int(-1, +1, 0)}; // W
+                                            
+                                            
     // Start is called before the first frame update
     void Start()
     {
-        Vector3Int target = new Vector3Int(0, 0, 0);
+        // Call dbug.
+        Dbug();
 
-        // Debug.
-        Debug.Log("Origin Tile at (0,0): " + groundTiles.GetTile(target));
-        for(int x = -1; x <= 1; x++)
-        {
-            for(int y = -1; y <= 1; y++)
-            {
-                target = new Vector3Int(x, y, 0);
-                // Debug.Log("Ground Tile at " + x + "," + y + ": " + groundTiles.GetTile(target));
-                // Debug.Log("Plant Tile at " + x + "," + y + ": " + plantTiles.GetTile(target));
-
-            }
-        }
-
-        // Cube - Hex conversion testing.
-        Vector3Int Hex = new Vector3Int(2, -2, 0);
-        Vector3Int Cube = new Vector3Int(3, -1, -2);
-
-        Debug.Log("Hex to Cube. Does " + oddr_to_cube(Hex) + " equal " + Cube + " ?");
-        Debug.Log("Cube to Hex. Does " + cube_to_oddr(Cube) + " equal " + Hex + " ?");
+        
 
 
     }
@@ -57,35 +46,73 @@ public class GridManager : MonoBehaviour
 
     // Cube coords to odd pointy top offset coords.
     // Taken from https://www.redblobgames.com/grids/hexagons/#conversions-offset
-    Vector3Int cube_to_oddr(Vector3Int cube)
+    public Vector3Int CubeToOddr(Vector3Int cube)
     {
-        int col = cube.x + (cube.z - (cube.z & 1)) / 2;
-        int row = cube.z;
+        int col = cube.x + (cube.y - (cube.y & 1)) / 2;
+        int row = cube.y;
         return new Vector3Int(col, row, 0);
     }
 
     // Odd pointy top offset coords to cube coords.
     // Taken from https://www.redblobgames.com/grids/hexagons/#conversions-offset
-    Vector3Int oddr_to_cube(Vector3Int hex)
+    public Vector3Int OddrToCube(Vector3Int hex)
     {
         int x = hex.x - (hex.y - (hex.y & 1)) / 2;
-        int z = hex.y;
-        int y = -x - z;
+        int y = hex.y;
+        int z = -x - y;
         return new Vector3Int(x, y, z);
     }
-
     
     // Cube directions from a simple int representation of the 6 directions.
     // NW is 0, NE is 1, so on clockwise until W is 5.
-    Vector3Int cube_direction(int direction)
+    public Vector3Int CubeDirection(int direction)
     {
-        return cube_directions[direction];
+        return cubeDirections[direction];
     }
 
     // Cube neighbors finds the neighbor in a direction from a given Vector3int cube coord.
-    Vector3Int cube_neighbor(Vector3Int cube, int direction)
+    // NW is 0, NE is 1, so on clockwise until W is 5.
+    public Vector3Int CubeNeighbor(Vector3Int cube, int direction)
     {
-        return cube + cube_direction(direction);
+        return cube + CubeDirection(direction);
+    }
+
+    // To find the oddr offset neighbor, just covert to cube and use cubic function.
+    public Vector3Int OddrNeighbor(Vector3Int hex, int direction)
+    {
+        return CubeToOddr(CubeNeighbor(OddrToCube(hex), direction));
+    }
+
+    // Cube distance: Given two cubes, a and b,find distance, return int.
+    public int CubeDistance(Vector3Int cubeA, Vector3Int cubeB)
+    {
+        return Mathf.Max(Mathf.Abs(cubeA.x - cubeB.x), Mathf.Abs(cubeA.y - cubeB.y), Mathf.Abs(cubeA.z - cubeB.z));
+    }
+
+    // Oddr distance: Given two hexes, a and b, convert from oddr to cube, find distance, return int.
+    public int OddrDistance(Vector3Int hexA, Vector3Int hexB)
+    {
+        Vector3Int cubeA = OddrToCube(hexA);
+        Vector3Int cubeB = OddrToCube(hexB);
+
+        return CubeDistance(cubeA, cubeB);
+    }
+
+    // Tile Range: Given a Cube coord and a distance, return an array of tiles that fall within the range.
+    public Vector3Int[] CubeRange(Vector3Int cube, int distance)
+    {
+        Vector3Int[] results = { };
+        return results;
+
+        for (int d = -distance; d <= distance; d++)
+        {
+            /*
+            for each max(-N, -x - N) ≤ y ≤ min(+N, -x + N):
+                var z = -x - y
+                results.append(cube_add(center, Cube(x, y, z)))
+                */
+        }
+
     }
 
     /* Water:
@@ -147,5 +174,36 @@ public class GridManager : MonoBehaviour
     void GrowTile()//??? tile)
     {
         
+    }
+
+    // Debug and testing misc function.
+    private void Dbug()
+    {
+        Vector3Int origin = new Vector3Int(0, 0, 0);
+        Vector3Int target = new Vector3Int(2, 2, 0);
+
+        // Distance testing:
+        Assert.AreEqual(OddrDistance(origin, target), 3);
+
+        // Neighbors debug.
+        /*
+        for (int d = 0; d <= 5; d++)
+        {
+            target = oddr_offset_neighbor(origin, d);
+            Debug.Log("Ground neighbor of target at " + origin + " in " + cube_to_oddr(cube_direction(d)) + ": " 
+                + groundTiles.GetTile(target));
+            Debug.Log("Plant neighbor of target at " + origin + " in " + cube_to_oddr(cube_direction(d)) + ": " 
+                + plantTiles.GetTile(target));
+
+        } 
+        * Done, works good. */
+
+        // Cube - Hex conversion testing.
+        /*
+        Vector3Int Hex = new Vector3Int(2, -2, 0);
+        Vector3Int Cube = new Vector3Int(3, -2, -1);
+        Debug.Log("Cube to Hex. Does " + Hex + " equal " + cube_to_oddr(Cube) + " ?");
+        Debug.Log("Hex to Cube. Does " + Cube + " equal " + oddr_to_cube(Hex) + " ?");
+        * Done, works good. */
     }
 }
