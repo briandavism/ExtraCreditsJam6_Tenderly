@@ -1,9 +1,104 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
+
 
 public class GridManager : MonoBehaviour
 {
+    // Public variables
+    public Tilemap groundTiles;
+    public Tilemap plantTiles;
+
+    // Private variables
+    private Vector3Int[] cube_directions = {new Vector3Int(+1, -1, 0), new Vector3Int(+1, 0, -1),
+                                            new Vector3Int(0, +1, -1), new Vector3Int(-1, +1, 0),
+                                            new Vector3Int(-1, 0, +1), new Vector3Int(0, -1, +1)};
+    // Start is called before the first frame update
+    void Start()
+    {
+        Vector3Int target = new Vector3Int(0, 0, 0);
+
+        // Debug.
+        Debug.Log("Origin Tile at (0,0): " + groundTiles.GetTile(target));
+        for(int x = -1; x <= 1; x++)
+        {
+            for(int y = -1; y <= 1; y++)
+            {
+                target = new Vector3Int(x, y, 0);
+                // Debug.Log("Ground Tile at " + x + "," + y + ": " + groundTiles.GetTile(target));
+                // Debug.Log("Plant Tile at " + x + "," + y + ": " + plantTiles.GetTile(target));
+
+            }
+        }
+
+        // Cube - Hex conversion testing.
+        Vector3Int Hex = new Vector3Int(2, -2, 0);
+        Vector3Int Cube = new Vector3Int(3, -1, -2);
+
+        Debug.Log("Hex to Cube. Does " + oddr_to_cube(Hex) + " equal " + Cube + " ?");
+        Debug.Log("Cube to Hex. Does " + cube_to_oddr(Cube) + " equal " + Hex + " ?");
+
+
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+
+    }
+
+    /* Grid:
+     *  - Fundamentally, there is a hexagonal grid of tiles.
+     *  - Each tile can be some kind of ground type.
+     *      - Current assumption is 4 types: Water, Marsh, Soil, Barren.
+     *  - Unity uses Odd Offset coordinates, while easy algorithms use cubic.
+     */
+
+    // Cube coords to odd pointy top offset coords.
+    // Taken from https://www.redblobgames.com/grids/hexagons/#conversions-offset
+    Vector3Int cube_to_oddr(Vector3Int cube)
+    {
+        int col = cube.x + (cube.z - (cube.z & 1)) / 2;
+        int row = cube.z;
+        return new Vector3Int(col, row, 0);
+    }
+
+    // Odd pointy top offset coords to cube coords.
+    // Taken from https://www.redblobgames.com/grids/hexagons/#conversions-offset
+    Vector3Int oddr_to_cube(Vector3Int hex)
+    {
+        int x = hex.x - (hex.y - (hex.y & 1)) / 2;
+        int z = hex.y;
+        int y = -x - z;
+        return new Vector3Int(x, y, z);
+    }
+
+    
+    // Cube directions from a simple int representation of the 6 directions.
+    // NW is 0, NE is 1, so on clockwise until W is 5.
+    Vector3Int cube_direction(int direction)
+    {
+        return cube_directions[direction];
+    }
+
+    // Cube neighbors finds the neighbor in a direction from a given Vector3int cube coord.
+    Vector3Int cube_neighbor(Vector3Int cube, int direction)
+    {
+        return cube + cube_direction(direction);
+    }
+
+    /* Water:
+     *  - In the beginning, all is barren.
+     *  - When water is placed, find all tiles within a certain radius and enque them.
+     *      - Potentially, we can queue the nearest neighbors and only enque more neighbors when a 
+     *          tile becomes marsh.
+     *  - 
+     */
+
+
+
+
 
     /* Growth Phase:
      *  - For each tile, add a random 4 digit decimal from 0 to 9999 to the Tier number of the object.
@@ -46,6 +141,7 @@ public class GridManager : MonoBehaviour
      *              
      *                  
      */
+
 
     // Is this tile the center of a recipie? If it is, grow it into something!
     void GrowTile()//??? tile)
