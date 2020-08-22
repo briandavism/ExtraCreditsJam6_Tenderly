@@ -55,10 +55,10 @@ public class GridManager : MonoBehaviour
 
     // Odd pointy top offset coords to cube coords.
     // Taken from https://www.redblobgames.com/grids/hexagons/#conversions-offset
-    public Vector3Int OddrToCube(Vector3Int hex)
+    public Vector3Int OddrToCube(Vector3Int oddr)
     {
-        int x = hex.x - (hex.y - (hex.y & 1)) / 2;
-        int y = hex.y;
+        int x = oddr.x - (oddr.y - (oddr.y & 1)) / 2;
+        int y = oddr.y;
         int z = -x - y;
         return new Vector3Int(x, y, z);
     }
@@ -78,9 +78,9 @@ public class GridManager : MonoBehaviour
     }
 
     // To find the oddr offset neighbor, just covert to cube and use cubic function.
-    public Vector3Int OddrNeighbor(Vector3Int hex, int direction)
+    public Vector3Int OddrNeighbor(Vector3Int oddr, int direction)
     {
-        return CubeToOddr(CubeNeighbor(OddrToCube(hex), direction));
+        return CubeToOddr(CubeNeighbor(OddrToCube(oddr), direction));
     }
 
     // Cube distance: Given two cubes, a and b,find distance, return int.
@@ -90,29 +90,51 @@ public class GridManager : MonoBehaviour
     }
 
     // Oddr distance: Given two hexes, a and b, convert from oddr to cube, find distance, return int.
-    public int OddrDistance(Vector3Int hexA, Vector3Int hexB)
+    public int OddrDistance(Vector3Int oddrA, Vector3Int oddrB)
     {
-        Vector3Int cubeA = OddrToCube(hexA);
-        Vector3Int cubeB = OddrToCube(hexB);
+        Vector3Int cubeA = OddrToCube(oddrA);
+        Vector3Int cubeB = OddrToCube(oddrB);
 
         return CubeDistance(cubeA, cubeB);
     }
 
-    // Tile Range: Given a Cube coord and a distance, return an array of tiles that fall within the range.
-    public Vector3Int[] CubeRange(Vector3Int cube, int distance)
+    // Cuve Range: Given a Cube coord and a distance, return an array of tiles that fall within the range.
+    public List<Vector3Int> CubeRange(Vector3Int cube, int distance)
     {
-        Vector3Int[] results = { };
-        return results;
+        // List of tiles in Cube coords, not oddr coords.
+        List<Vector3Int> results = new List<Vector3Int>();
 
-        for (int d = -distance; d <= distance; d++)
+        // From the center x, search from d distance in the negative and positive directions from x.
+        for (int x = -distance; x <= distance; x++)
         {
-            /*
-            for each max(-N, -x - N) ≤ y ≤ min(+N, -x + N):
-                var z = -x - y
-                results.append(cube_add(center, Cube(x, y, z)))
-                */
+            for (int y = Mathf.Max(-distance, -x - distance); y <= Mathf.Min(distance, -x + distance); y++)
+            {
+                int z = -x - y;
+                results.Add(cube + new Vector3Int(x, y, z));
+            }
         }
 
+        return results;
+    }
+
+    // Oddr Range: Given an Oddr coord and a distance, return an array of tiles that fall within the range.
+    public List<Vector3Int> OddrRange(Vector3Int oddr, int distance)
+    {
+        // List of tiles in Oddr coords.
+        List<Vector3Int> results = new List<Vector3Int>();
+        Vector3Int cube = OddrToCube(oddr);
+
+        // From the center x, search from d distance in the negative and positive directions from x.
+        for (int x = -distance; x <= distance; x++)
+        {
+            for (int y = Mathf.Max(-distance, -x - distance); y <= Mathf.Min(distance, x + distance); y++)
+            {
+                int z = -x - y;
+                results.Add(CubeToOddr(cube + new Vector3Int(x, y, z)));
+            }
+        }
+
+        return results;
     }
 
     /* Water:
@@ -181,9 +203,39 @@ public class GridManager : MonoBehaviour
     {
         Vector3Int origin = new Vector3Int(0, 0, 0);
         Vector3Int target = new Vector3Int(2, 2, 0);
+        Vector3Int targetCube = new Vector3Int(2, 2, -4);
+
+
+        // Neighbor testing: Keep in mind, the range function also captures yourself!
+        List<Vector3Int> cubeNeighbors = CubeRange(origin, 0);
+        List<Vector3Int> oddrNeighbors = OddrRange(origin, 0);
+        Assert.AreEqual(cubeNeighbors.Count, 1);
+        Assert.AreEqual(oddrNeighbors.Count, 1);
+
+        List<Vector3Int> cubeNeighbors2 = CubeRange(targetCube, 1);
+        List<Vector3Int> oddrNeighbors2 = OddrRange(target, 2);
+        List<Vector3Int> oddrNeighbors3 = OddrRange(target, 3);
+        Assert.AreEqual(cubeNeighbors2.Count, 7);
+        Assert.AreEqual(oddrNeighbors2.Count, 19);
+        Assert.AreEqual(oddrNeighbors3.Count, 37);
+
+
+        // For loop
+        /* 
+        Debug.Log("Center at: " + origin);
+        Debug.Log("Neighbor count: " + cubeNeighbors2.Count);
+        foreach (Vector3Int v in cubeNeighbors2)
+        {
+            Debug.Log("Neighbor at: " + v);
+        } 
+        * /
+
 
         // Distance testing:
+        /* 
         Assert.AreEqual(OddrDistance(origin, target), 3);
+        * Done, works great.*/
+        Assert.AreEqual(CubeDistance(origin, targetCube), 4);
 
         // Neighbors debug.
         /*
