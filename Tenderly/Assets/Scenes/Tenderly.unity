@@ -133,6 +133,7 @@ GameObject:
   m_Component:
   - component: {fileID: 307085491}
   - component: {fileID: 307085490}
+  - component: {fileID: 307085492}
   m_Layer: 0
   m_Name: Grid
   m_TagString: Untagged
@@ -168,6 +169,20 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &307085492
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 307085489}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6861131e58be0f419f270555c7186a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  groundTiles: {fileID: 609464620}
+  plantTiles: {fileID: 960105592}
 --- !u!1 &333586049
 GameObject:
   m_ObjectHideFlags: 0
@@ -343,8 +358,6 @@ GameObject:
   - component: {fileID: 609464618}
   - component: {fileID: 609464620}
   - component: {fileID: 609464619}
-  - component: {fileID: 609464622}
-  - component: {fileID: 609464621}
   m_Layer: 0
   m_Name: GroundTilemap
   m_TagString: Untagged
@@ -2955,34 +2968,6 @@ Tilemap:
     e31: 0
     e32: 0
     e33: 1
---- !u!114 &609464621
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 609464617}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7e603a851d0affa4fb995869fe3de835, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!19719996 &609464622
-TilemapCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 609464617}
-  m_Enabled: 1
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_UsedByComposite: 0
-  m_Offset: {x: 0, y: 0}
-  m_MaximumTileChangeCount: 1000
-  m_ExtrusionFactor: 0.00001
 --- !u!1 &896188505
 GameObject:
   m_ObjectHideFlags: 0
@@ -4573,7 +4558,6 @@ GameObject:
   - component: {fileID: 1720207926}
   - component: {fileID: 1720207925}
   - component: {fileID: 1720207928}
-  - component: {fileID: 1720207929}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -4655,21 +4639,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1720207924}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bb0fea044699e914ea048590e965af02, type: 3}
+  m_Script: {fileID: 11500000, guid: 163b589f4d45b8a44885ee557fbc22ef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &1720207929
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1720207924}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9931f592e25bce9468206af3778d0a07, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  cameraZoom: 16
+  grid: {fileID: 307085490}
+  hoverText: {fileID: 1288082937}
 --- !u!1 &1784398192
 GameObject:
   m_ObjectHideFlags: 0

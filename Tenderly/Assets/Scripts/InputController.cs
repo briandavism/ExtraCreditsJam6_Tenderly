@@ -3,24 +3,33 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using UnityEngine.Assertions;
+using UnityEngine.UI;
 
 public class InputController : MonoBehaviour
 {
     // Camera Drag
-    private Vector3 ResetCamera;
-    private Vector3 Origin;
-    private Vector3 Diference;
-    private bool Drag = false;
+    private Vector3 resetCamera;
+    private Vector3 cameraOrigin;
+    private Vector3 cameraDiff;
+    private bool mouseDrag = false;
     // Camera Zoom
-    private float zoom = 10;
-    Vector3 newPosition;
+    public float cameraZoom = 16;
+    Vector3 cameraNewPosition;
     // Mouse hover
     public Grid grid;
+    public Text hoverText;
+    private string hoverGroundString = "";
+    private string hoverPlantString = "";
+    private Tile hoverGroudTile;
+    private Tile hoverPlantTile;
 
     void Start()
     {
         // A base position we can use to resent the cameras position to.
-        ResetCamera = Camera.main.transform.position;
+        resetCamera = Camera.main.transform.position;
+
+        // Initialize hover text to be empty.
+        hoverText.text = "";
     }
 
     void LateUpdate()
@@ -29,51 +38,73 @@ public class InputController : MonoBehaviour
         // On mouse click, prepare to drag.
         if (Input.GetMouseButton(0))
         {
-            Diference = (Camera.main.ScreenToWorldPoint(Input.mousePosition)) - Camera.main.transform.position;
-            if (Drag == false)
+            cameraDiff = (Camera.main.ScreenToWorldPoint(Input.mousePosition)) - Camera.main.transform.position;
+            if (mouseDrag == false)
             {
-                Drag = true;
-                Origin = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                mouseDrag = true;
+                cameraOrigin = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             }
         }
         else
         {
-            Drag = false;
+            mouseDrag = false;
         }
-        if (Drag == true)
+        if (mouseDrag == true)
         {
-            Camera.main.transform.position = Origin - Diference;
+            Camera.main.transform.position = cameraOrigin - cameraDiff;
         }
 
         // On right click, reset camera to ResetCamera position.
         if (Input.GetMouseButton(1))
         {
-            Camera.main.transform.position = ResetCamera;
+            Camera.main.transform.position = resetCamera;
         }
 
         // On mouse wheel, adjust the zoom.
-        if (Input.GetAxis("Mouse ScrollWheel") > 0 && zoom > 9)
+        if (Input.GetAxis("Mouse ScrollWheel") > 0 && cameraZoom > 9)
         {
-            zoom -= 1;
-            Camera.main.orthographicSize = zoom;
-            newPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            transform.position = Vector3.Lerp(transform.position, newPosition, 0.1F);
+            cameraZoom -= 1;
+            Camera.main.orthographicSize = cameraZoom;
+            cameraNewPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            transform.position = Vector3.Lerp(transform.position, cameraNewPosition, 0.1F);
         }
-        else if (Input.GetAxis("Mouse ScrollWheel") < 0 && zoom < 101)
+        else if (Input.GetAxis("Mouse ScrollWheel") < 0 && cameraZoom < 101)
         {
-            zoom += 1;
-            Camera.main.orthographicSize = zoom;
+            cameraZoom += 1;
+            Camera.main.orthographicSize = cameraZoom;
         }
 
-        // On mouse hover, get tile info.
-        if (Input.GetKeyDown("space"))
+        // Hover Text manager: Change text based on where the mouse is over the grid. Format is <Ground>:<Plant>
+        Vector3Int cellPos = grid.WorldToCell(Camera.main.ScreenToWorldPoint(Input.mousePosition));
+        List<Tile> tiles = grid.GetComponent<GridManager>().GetTiles(cellPos);
+        // If this tile is a different tile than previous updates, change the hover text and update the tile.
+        if (tiles != null && tiles.Count > 0)
         {
-            // Used for finding tiles from mouse position input.
-            Vector3Int cellPos = grid.WorldToCell(Camera.main.ScreenToWorldPoint(Input.mousePosition));
-            List<Tile> tiles = grid.GetComponent<GridManager>().GetTiles(cellPos);
-            for (int i = 0; i < tiles.Count; i++)
+            // Only update hoverText when needed.
+            bool updateHoverText = false;
+
+            // Check ground tile difference.
+            if (tiles[0].name != hoverGroundString)
             {
-                Debug.Log(tiles[i]);
+                hoverGroundString = tiles[0].name;
+                updateHoverText = true;
+            }
+
+            // Check plant tile if present.
+            if (tiles.Count == 2 && tiles[1].name != hoverPlantString)
+            {
+                hoverPlantString = tiles[1].name;
+                updateHoverText = true;
+            } else if (tiles.Count < 2 && hoverPlantString != "")
+            {
+                hoverPlantString = "";
+                updateHoverText = true;
+            }
+
+            // Update hoverText if needed.
+            if (updateHoverText)
+            {
+                hoverText.text = hoverGroundString + ":" + hoverPlantString;
             }
         }
     }
