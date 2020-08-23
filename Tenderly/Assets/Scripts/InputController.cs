@@ -118,5 +118,11 @@ public class InputController : MonoBehaviour
         {
             grid.GetComponent<GridManager>().PlaceWater(cellPos);
         }
+
+        // Clear Tile: Clears off plants in the tile, if there are any.
+        if (Input.GetKeyDown("backspace"))
+        {
+            grid.GetComponent<GridManager>().ClearPlants(cellPos);
+        }
     }
 }

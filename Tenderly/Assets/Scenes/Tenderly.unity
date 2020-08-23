@@ -307,16 +307,20 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 25b4ecc4941a8d9449d4a3dd38a2bbe6, type: 2}
   - {fileID: 11400000, guid: ac8e4ae214932f84199153f6af36c423, type: 2}
   barrenPlants:
+  - {fileID: 11400000, guid: 0a76bbf87dd10a74d96e5daa4fda8da8, type: 2}
   - {fileID: 11400000, guid: 52331b291013e7e49bd0b6a717e6a295, type: 2}
   soilPlants:
+  - {fileID: 11400000, guid: 0a76bbf87dd10a74d96e5daa4fda8da8, type: 2}
   - {fileID: 11400000, guid: 52331b291013e7e49bd0b6a717e6a295, type: 2}
   - {fileID: 11400000, guid: 61415e284c2b6dd41994638e37767a32, type: 2}
   - {fileID: 11400000, guid: 37e3fc7180bd51d4da5cfbd12f20bea1, type: 2}
   marshPlants:
+  - {fileID: 11400000, guid: 0a76bbf87dd10a74d96e5daa4fda8da8, type: 2}
   - {fileID: 11400000, guid: 52331b291013e7e49bd0b6a717e6a295, type: 2}
   - {fileID: 11400000, guid: 179c3dab1322c9d469ddda42aa1c7d43, type: 2}
   - {fileID: 11400000, guid: bbd501a958ba9564c91723d6c9f2550e, type: 2}
   waterPlants:
+  - {fileID: 11400000, guid: 0a76bbf87dd10a74d96e5daa4fda8da8, type: 2}
   - {fileID: 11400000, guid: 52331b291013e7e49bd0b6a717e6a295, type: 2}
   - {fileID: 11400000, guid: 74317eb4383868b409749262730d0341, type: 2}
   - {fileID: 11400000, guid: f6297fc532a4f414cb916b6adbb868cc, type: 2}

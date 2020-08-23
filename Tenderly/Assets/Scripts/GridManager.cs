@@ -259,34 +259,28 @@ public class GridManager : MonoBehaviour
     {
         while (true)
         {
-            //DEBUG
-            Debug.Log("Time to Spawn plants at: " + Time.time);
-
             // Spawn plants on some tiles within spawnRadius originating from the mouse.
             Vector3Int spawnOrigin = GetComponentInParent<Grid>().WorldToCell(Camera.main.ScreenToWorldPoint(Input.mousePosition));
-
-            Debug.Log("Spawn Origin at: " + spawnOrigin);
-
-
-
             List<Vector3Int> tileVectors = OddrRange(spawnOrigin, spawnRadius);
             List<Tile> tiles = new List<Tile>();
             foreach (Vector3Int tilePosition in tileVectors)
             {
                 Tile groundTile = groundTiles.GetTile<Tile>(tilePosition);
+
                 Tile plantTile = plantTiles.GetTile<Tile>(tilePosition);
                 tiles.Add(plantTile);
 
                 // If there is a ground tile and the tile has no plants...
-                if (groundTile != null && plantTile is null)
+                if (groundTile != null && (plantTile is null || plantTile.name == "Empty"))
                 {
+                    List<Tile> spawnOptions = plantTilePalette[groundTile];
                     switch (groundTile.name)
                     {
                         case "Barren":
                             // Spawn something from the barren plant list.
-                            foreach (Tile tile in plantTilePalette[groundTile])
+                            foreach (Tile tile in spawnOptions)
                             {
-                                if ((Random.Range(0, 1)) > 0.5f)
+                                if ((Random.Range(0f, 1f)) < 0.05f)
                                 {
                                     plantTiles.SetTile(tilePosition, tile);
                                     break;
@@ -295,9 +289,11 @@ public class GridManager : MonoBehaviour
                             break;
                         case "Soil":
                             // Spawn something from the soil plant list.
-                            foreach (Tile tile in plantTilePalette[groundTile])
+                            foreach (Tile tile in spawnOptions)
                             {
-                                if ((Random.Range(0, 1)) > 0.5f)
+                                // dbug
+                                Debug.Log("Soil options are: " + tile.name);
+                                if ((Random.Range(0f, 1f)) < 0.05f)
                                 {
                                     plantTiles.SetTile(tilePosition, tile);
                                     break;
@@ -306,9 +302,9 @@ public class GridManager : MonoBehaviour
                             break;
                         case "Marsh":
                             // Spawn something from the marsh plant list.
-                            foreach (Tile tile in plantTilePalette[groundTile])
+                            foreach (Tile tile in spawnOptions)
                             {
-                                if ((Random.Range(0, 1)) > 0.5f)
+                                if ((Random.Range(0f, 1f)) < 0.05f)
                                 {
                                     plantTiles.SetTile(tilePosition, tile);
                                     break;
@@ -317,9 +313,9 @@ public class GridManager : MonoBehaviour
                             break;
                         case "Water":
                             // Spawn something from the water plant list.
-                            foreach (Tile tile in plantTilePalette[groundTile])
+                            foreach (Tile tile in spawnOptions)
                             {
-                                if ((Random.Range(0, 1)) > 0.5f)
+                                if ((Random.Range(0f, 1f)) < 0.05f)
                                 {
                                     plantTiles.SetTile(tilePosition, tile);
                                     break;
@@ -327,12 +323,8 @@ public class GridManager : MonoBehaviour
                             }
                             break;
                     }
-                }
+                } 
             }
-
-            // Modulate the spawn timer and spawn radius a little.
-            Debug.Log("The other side at: " + Time.time);
-
 
             yield return new WaitForSeconds(spawnTimer);
         }
@@ -383,12 +375,26 @@ public class GridManager : MonoBehaviour
      *                  
      */
 
+    /* Clear Plants:
+     * - Clear the tile under the cursor of plants, if any.
+     */
+    public void ClearPlants(Vector3Int tilePosition)
+    {
+        Tile grountUnderPlant = groundTiles.GetTile<Tile>(tilePosition);
+        Tile tileToClear = plantTiles.GetTile<Tile>(tilePosition);
+        if (tileToClear != null && grountUnderPlant != null)
+        {
+            plantTiles.SetTile(tilePosition, plantTilePalette[grountUnderPlant][0]);
+        }
+    }
+
 
     // Is this tile the center of a recipie? If it is, grow it into something!
     void GrowTile()//??? tile)
     {
         
     }
+
 
     // Debug and testing misc function.
     private void Dbug()
