@@ -231,6 +231,7 @@ public class GridManager : MonoBehaviour
         Vector3Int targetCube = new Vector3Int(2, 2, -4);
 
         // Get tile testing:
+        /*
         target = new Vector3Int(-1, 0, 0);
         Debug.Log("Is there a lily and water tile at (-1,0,0)? ");
         List<Tile> tilesTarget = GetTiles(target);
@@ -245,7 +246,7 @@ public class GridManager : MonoBehaviour
         {
             Debug.Log(tilesOrigin[i]);
         }
-
+        * Works alright */
 
         // Neighbor testing: Keep in mind, the range function also captures yourself!
         /*

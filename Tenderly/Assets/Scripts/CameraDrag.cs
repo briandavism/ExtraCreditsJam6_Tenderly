@@ -6,13 +6,17 @@ public class CameraDrag : MonoBehaviour
     private Vector3 Origin;
     private Vector3 Diference;
     private bool Drag = false;
+
     void Start()
     {
+        // A base position we can use to resent the cameras position to.
         ResetCamera = Camera.main.transform.position;
     }
+
     void LateUpdate()
     {
-
+        // Input Handler logic for various user inputs.
+        // On mouse click...
         if (Input.GetMouseButton(0))
         {
             Diference = (Camera.main.ScreenToWorldPoint(Input.mousePosition)) - Camera.main.transform.position;
@@ -30,7 +34,8 @@ public class CameraDrag : MonoBehaviour
         {
             Camera.main.transform.position = Origin - Diference;
         }
-        //RESET CAMERA TO STARTING POSITION WITH RIGHT CLICK
+
+        // On right click, reset camera to ResetCamera position.
         if (Input.GetMouseButton(1))
         {
             Camera.main.transform.position = ResetCamera;
