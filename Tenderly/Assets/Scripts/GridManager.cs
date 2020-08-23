@@ -10,6 +10,7 @@ public class GridManager : MonoBehaviour
     // Public variables
     public Tilemap groundTiles;
     public Tilemap plantTiles;
+    public List<Tile> groundTilePalette;
     
     // Private variables
     private Vector3Int[] cubeDirections = {new Vector3Int(0, +1, -1),  // NW
@@ -26,9 +27,6 @@ public class GridManager : MonoBehaviour
         // Call dbug.
         Dbug();
 
-        
-
-
     }
 
     // Update is called once per frame
@@ -43,7 +41,7 @@ public class GridManager : MonoBehaviour
      *      - Current assumption is 4 types: Water, Marsh, Soil, Barren.
      *  - Unity uses Odd Offset coordinates, while easy algorithms use cubic.
      */
-
+    /*************************************: CUBE AND ODDR FUNCTIONS :********************************************/
     // Cube coords to odd pointy top offset coords.
     // Taken from https://www.redblobgames.com/grids/hexagons/#conversions-offset
     public Vector3Int CubeToOddr(Vector3Int cube)
@@ -98,7 +96,7 @@ public class GridManager : MonoBehaviour
         return CubeDistance(cubeA, cubeB);
     }
 
-    // Cuve Range: Given a Cube coord and a distance, return an array of tiles that fall within the range.
+    // Cuve Range: Given a Cube coord and a distance, return a list of tiles that fall within the range.
     public List<Vector3Int> CubeRange(Vector3Int cube, int distance)
     {
         // List of tiles in Cube coords, not oddr coords.
@@ -117,7 +115,7 @@ public class GridManager : MonoBehaviour
         return results;
     }
 
-    // Oddr Range: Given an Oddr coord and a distance, return an array of tiles that fall within the range.
+    // Oddr Range: Given an Oddr coord and a distance, return a list of tiles that fall within the range.
     public List<Vector3Int> OddrRange(Vector3Int oddr, int distance)
     {
         // List of tiles in Oddr coords.
@@ -127,7 +125,7 @@ public class GridManager : MonoBehaviour
         // From the center x, search from d distance in the negative and positive directions from x.
         for (int x = -distance; x <= distance; x++)
         {
-            for (int y = Mathf.Max(-distance, -x - distance); y <= Mathf.Min(distance, x + distance); y++)
+            for (int y = Mathf.Max(-distance, -x - distance); y <= Mathf.Min(distance, -x + distance); y++)
             {
                 int z = -x - y;
                 results.Add(CubeToOddr(cube + new Vector3Int(x, y, z)));
@@ -135,6 +133,11 @@ public class GridManager : MonoBehaviour
         }
 
         return results;
+
+        // DEBUG MATH
+        // Distance = 5, x = -4 for this part of the loop.
+        // What is the max of (-5 and --4 - 5)? -1.
+        // What is the min of (5 and --4 +5) 5?
     }
 
     // Get Tile: Givent a Vector3Int, return the tile or tiles that are beneath it.
@@ -158,10 +161,7 @@ public class GridManager : MonoBehaviour
         return results;
     }
 
-
-
-
-
+    /*************************************: GAME MECHANICS :********************************************/
     /* Water:
      *  - In the beginning, all is barren.
      *  - When water is placed, find all tiles within a certain radius and enque them.
@@ -169,7 +169,37 @@ public class GridManager : MonoBehaviour
      *          tile becomes marsh.
      *  - 
      */
+     // Place Water: Call to send moisture out from a given Vector3Int location. Input assumes Oddr coords.
+     public void PlaceWater(Vector3Int waterSource)
+    {
+        // First, get a list of tiles within 5 tiles of the water source. Increase their wetness by 1.
+        // OR, for now, just make them instantly dirt.
+        List<Vector3Int> tileVectors = OddrRange(waterSource, 5);
+        List<Tile> tiles = new List<Tile>();
+        foreach (Vector3Int tilePosition in tileVectors)
+        {
+            Tile tile = groundTiles.GetTile<Tile>(tilePosition);
+            tiles.Add(tile);
 
+            // Make them all dirt for now. TODO: Implement slow dampening.
+            groundTiles.SetTile(tilePosition, groundTilePalette[1]);
+        }
+
+        // Now increase the wetness of tiles within 2.
+        tileVectors = OddrRange(waterSource, 2);
+        tiles = new List<Tile>();
+        foreach (Vector3Int tilePosition in tileVectors)
+        {
+            Tile tile = groundTiles.GetTile<Tile>(tilePosition);
+            tiles.Add(tile);
+
+            // Make them all dirt for now. TODO: Implement slow dampening.
+            groundTiles.SetTile(tilePosition, groundTilePalette[2]);
+        }
+
+        // Now increase the wetness of the central target tile.
+        groundTiles.SetTile(waterSource, groundTilePalette[3]);
+    }
 
 
 
@@ -230,6 +260,12 @@ public class GridManager : MonoBehaviour
         Vector3Int target = new Vector3Int(2, 2, 0);
         Vector3Int targetCube = new Vector3Int(2, 2, -4);
 
+        // Place Water testing:
+        Vector3Int tileToMakeWet = new Vector3Int(9, -3, 0);
+        PlaceWater(tileToMakeWet);
+
+
+
         // Get tile testing:
         /*
         target = new Vector3Int(-1, 0, 0);
@@ -277,8 +313,8 @@ public class GridManager : MonoBehaviour
         // Distance testing:
         /* 
         Assert.AreEqual(OddrDistance(origin, target), 3);
-        * Done, works great.*/
         Assert.AreEqual(CubeDistance(origin, targetCube), 4);
+        * Done, works great.*/
 
         // Neighbors debug.
         /*
