@@ -10,7 +10,7 @@ public class GridManager : MonoBehaviour
     // Public variables
     public Tilemap groundTiles;
     public Tilemap plantTiles;
-
+    
     // Private variables
     private Vector3Int[] cubeDirections = {new Vector3Int(0, +1, -1),  // NW
                                             new Vector3Int(+1, 0, -1),  // NE
@@ -137,6 +137,31 @@ public class GridManager : MonoBehaviour
         return results;
     }
 
+    // Get Tile: Givent a Vector3Int, return the tile or tiles that are beneath it.
+    public List<Tile> GetTiles(Vector3Int mousePos)
+    {
+        List<Tile> results = new List<Tile>();
+        
+        // There should always be a ground tile. TODO: Error checking. Possibly use bounds to validate?
+        if (groundTiles.HasTile(mousePos))
+        {
+            Tile tile = groundTiles.GetTile<Tile>(mousePos);
+            results.Add(tile);
+        }
+
+        if (plantTiles.HasTile(mousePos))
+        {
+            Tile tile = plantTiles.GetTile<Tile>(mousePos);
+            results.Add(tile);
+        }
+
+        return results;
+    }
+
+
+
+
+
     /* Water:
      *  - In the beginning, all is barren.
      *  - When water is placed, find all tiles within a certain radius and enque them.
@@ -205,8 +230,25 @@ public class GridManager : MonoBehaviour
         Vector3Int target = new Vector3Int(2, 2, 0);
         Vector3Int targetCube = new Vector3Int(2, 2, -4);
 
+        // Get tile testing:
+        target = new Vector3Int(-1, 0, 0);
+        Debug.Log("Is there a lily and water tile at (-1,0,0)? ");
+        List<Tile> tilesTarget = GetTiles(target);
+        for (int i = 0; i < tilesTarget.Count; i++)
+        {
+            Debug.Log(tilesTarget[i]);
+        }
+
+        Debug.Log("What's at origin?");
+        List<Tile> tilesOrigin = GetTiles(origin);
+        for (int i = 0; i < tilesOrigin.Count; i++)
+        {
+            Debug.Log(tilesOrigin[i]);
+        }
+
 
         // Neighbor testing: Keep in mind, the range function also captures yourself!
+        /*
         List<Vector3Int> cubeNeighbors = CubeRange(origin, 0);
         List<Vector3Int> oddrNeighbors = OddrRange(origin, 0);
         Assert.AreEqual(cubeNeighbors.Count, 1);
@@ -218,7 +260,7 @@ public class GridManager : MonoBehaviour
         Assert.AreEqual(cubeNeighbors2.Count, 7);
         Assert.AreEqual(oddrNeighbors2.Count, 19);
         Assert.AreEqual(oddrNeighbors3.Count, 37);
-
+        * Done great work */
 
         // For loop
         /* 
