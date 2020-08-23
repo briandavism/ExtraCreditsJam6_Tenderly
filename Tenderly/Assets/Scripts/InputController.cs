@@ -22,6 +22,7 @@ public class InputController : MonoBehaviour
     private string hoverPlantString = "";
     private Tile hoverGroudTile;
     private Tile hoverPlantTile;
+    // Water Placement
 
     void Start()
     {
@@ -35,6 +36,12 @@ public class InputController : MonoBehaviour
     void LateUpdate()
     {
         /************** Input Handler logic for various user inputs. **************/
+        // Useful parameters:
+        // The Vector3Int corresponding to the mouse position over the grid.
+        Vector3Int cellPos = grid.WorldToCell(Camera.main.ScreenToWorldPoint(Input.mousePosition));
+        // The tiles, ground and plant, that may be on the grid under the mouse.
+        List<Tile> tiles = grid.GetComponent<GridManager>().GetTiles(cellPos);
+
         // On mouse click, prepare to drag.
         if (Input.GetMouseButton(0))
         {
@@ -75,8 +82,6 @@ public class InputController : MonoBehaviour
         }
 
         // Hover Text manager: Change text based on where the mouse is over the grid. Format is <Ground>:<Plant>
-        Vector3Int cellPos = grid.WorldToCell(Camera.main.ScreenToWorldPoint(Input.mousePosition));
-        List<Tile> tiles = grid.GetComponent<GridManager>().GetTiles(cellPos);
         // If this tile is a different tile than previous updates, change the hover text and update the tile.
         if (tiles != null && tiles.Count > 0)
         {
@@ -106,6 +111,12 @@ public class InputController : MonoBehaviour
             {
                 hoverText.text = hoverGroundString + ":" + hoverPlantString;
             }
+        }
+
+        // Water Placement: Place Water in the tile under the mouse.
+        if (Input.GetKeyDown("space"))
+        {
+            grid.GetComponent<GridManager>().PlaceWater(cellPos);
         }
     }
 }

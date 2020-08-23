@@ -11,6 +11,15 @@ public class GridManager : MonoBehaviour
     public Tilemap groundTiles;
     public Tilemap plantTiles;
     public List<Tile> groundTilePalette;
+    public List<Tile> barrenPlants;
+    public List<Tile> soilPlants;
+    public List<Tile> marshPlants;
+    public List<Tile> waterPlants;
+
+    public Dictionary<Tile, List<Tile>> plantTilePalette;
+    // For Plant Spawning Coroutine
+    public float spawnTimer;
+    public int spawnRadius;
     
     // Private variables
     private Vector3Int[] cubeDirections = {new Vector3Int(0, +1, -1),  // NW
@@ -27,6 +36,16 @@ public class GridManager : MonoBehaviour
         // Call dbug.
         Dbug();
 
+        // To start spawning things, call the SpawnPlants method, which will start a coroutine.
+        Debug.Log("Here I am in the start function.");
+        plantTilePalette = new Dictionary<Tile, List<Tile>>();
+        plantTilePalette.Add(groundTilePalette[0], barrenPlants);
+        plantTilePalette.Add(groundTilePalette[1], soilPlants);
+        plantTilePalette.Add(groundTilePalette[2], marshPlants);
+        plantTilePalette.Add(groundTilePalette[3], waterPlants);
+        Debug.Log("About to call SpawnPlants at: " + Time.time);
+
+        StartCoroutine(SpawnPlants());
     }
 
     // Update is called once per frame
@@ -169,8 +188,8 @@ public class GridManager : MonoBehaviour
      *          tile becomes marsh.
      *  - 
      */
-     // Place Water: Call to send moisture out from a given Vector3Int location. Input assumes Oddr coords.
-     public void PlaceWater(Vector3Int waterSource)
+    // Place Water: Call to send moisture out from a given Vector3Int location. Input assumes Oddr coords.
+    public void PlaceWater(Vector3Int waterSource)
     {
         // First, get a list of tiles within 5 tiles of the water source. Increase their wetness by 1.
         // OR, for now, just make them instantly dirt.
@@ -181,8 +200,11 @@ public class GridManager : MonoBehaviour
             Tile tile = groundTiles.GetTile<Tile>(tilePosition);
             tiles.Add(tile);
 
-            // Make them all dirt for now. TODO: Implement slow dampening.
-            groundTiles.SetTile(tilePosition, groundTilePalette[1]);
+            // Upgrade any barren tiles to dirt. TODO: Implement slow dampening.
+            if (groundTiles.GetTile<Tile>(tilePosition) == groundTilePalette[0])
+            {
+                groundTiles.SetTile(tilePosition, groundTilePalette[1]);
+            }
         }
 
         // Now increase the wetness of tiles within 2.
@@ -193,18 +215,133 @@ public class GridManager : MonoBehaviour
             Tile tile = groundTiles.GetTile<Tile>(tilePosition);
             tiles.Add(tile);
 
-            // Make them all dirt for now. TODO: Implement slow dampening.
-            groundTiles.SetTile(tilePosition, groundTilePalette[2]);
+            // Upgrade any barren tiles to dirt. TODO: Implement slow dampening.
+            if (groundTiles.GetTile<Tile>(tilePosition) == groundTilePalette[0] ||
+                groundTiles.GetTile<Tile>(tilePosition) == groundTilePalette[1])
+            {
+                groundTiles.SetTile(tilePosition, groundTilePalette[2]);
+            }
         }
 
         // Now increase the wetness of the central target tile.
         groundTiles.SetTile(waterSource, groundTilePalette[3]);
     }
 
+    // Remove Water: For now, not easily implementable. 
+    // TODO: For every tile, track every water tile within 5 tiles. We can then track how wet a tile should be
+    // and if it should become dry or not when water is removed.
+
+
+    /* Spawning:
+     *  - What can spawn?
+     *      - Tier 1 (most often) and Tier 2 (less often).
+     * Tier 0: 
+     *  - Barren:
+     *      - Dead Plants
+     *  - Soil:
+     *      - Dead Plants
+     *  - Marsh:
+     *      - Dead Plants
+     *  - Water:
+     *      - Dead Plants
+     * Tier 1:
+     *  - Barren:
+     *      - (Nothing)
+     *  - Soil:
+     *      - Grass
+     *  - Marsh:
+     *      - Soft Rush
+     *  - Water:
+     *      - Lilypad
+     */
+    // Spawn New Plants:
+    IEnumerator SpawnPlants()
+    {
+        while (true)
+        {
+            //DEBUG
+            Debug.Log("Time to Spawn plants at: " + Time.time);
+
+            // Spawn plants on some tiles within spawnRadius originating from the mouse.
+            Vector3Int spawnOrigin = GetComponentInParent<Grid>().WorldToCell(Camera.main.ScreenToWorldPoint(Input.mousePosition));
+
+            Debug.Log("Spawn Origin at: " + spawnOrigin);
 
 
 
-    /* Growth Phase:
+            List<Vector3Int> tileVectors = OddrRange(spawnOrigin, spawnRadius);
+            List<Tile> tiles = new List<Tile>();
+            foreach (Vector3Int tilePosition in tileVectors)
+            {
+                Tile groundTile = groundTiles.GetTile<Tile>(tilePosition);
+                Tile plantTile = plantTiles.GetTile<Tile>(tilePosition);
+                tiles.Add(plantTile);
+
+                // If there is a ground tile and the tile has no plants...
+                if (groundTile != null && plantTile is null)
+                {
+                    switch (groundTile.name)
+                    {
+                        case "Barren":
+                            // Spawn something from the barren plant list.
+                            foreach (Tile tile in plantTilePalette[groundTile])
+                            {
+                                if ((Random.Range(0, 1)) > 0.5f)
+                                {
+                                    plantTiles.SetTile(tilePosition, tile);
+                                    break;
+                                }
+                            }
+                            break;
+                        case "Soil":
+                            // Spawn something from the soil plant list.
+                            foreach (Tile tile in plantTilePalette[groundTile])
+                            {
+                                if ((Random.Range(0, 1)) > 0.5f)
+                                {
+                                    plantTiles.SetTile(tilePosition, tile);
+                                    break;
+                                }
+                            }
+                            break;
+                        case "Marsh":
+                            // Spawn something from the marsh plant list.
+                            foreach (Tile tile in plantTilePalette[groundTile])
+                            {
+                                if ((Random.Range(0, 1)) > 0.5f)
+                                {
+                                    plantTiles.SetTile(tilePosition, tile);
+                                    break;
+                                }
+                            }
+                            break;
+                        case "Water":
+                            // Spawn something from the water plant list.
+                            foreach (Tile tile in plantTilePalette[groundTile])
+                            {
+                                if ((Random.Range(0, 1)) > 0.5f)
+                                {
+                                    plantTiles.SetTile(tilePosition, tile);
+                                    break;
+                                }
+                            }
+                            break;
+                    }
+                }
+            }
+
+            // Modulate the spawn timer and spawn radius a little.
+            Debug.Log("The other side at: " + Time.time);
+
+
+            yield return new WaitForSeconds(spawnTimer);
+        }
+        
+    }
+
+
+
+    /* Merge:
      *  - For each tile, add a random 4 digit decimal from 0 to 9999 to the Tier number of the object.
      *  - Sort the objects from lowest to highest.
      *  - For each object in this list, check to see if something happens.
@@ -261,9 +398,10 @@ public class GridManager : MonoBehaviour
         Vector3Int targetCube = new Vector3Int(2, 2, -4);
 
         // Place Water testing:
+        /* 
         Vector3Int tileToMakeWet = new Vector3Int(9, -3, 0);
         PlaceWater(tileToMakeWet);
-
+        * Good, works okay */
 
 
         // Get tile testing:
