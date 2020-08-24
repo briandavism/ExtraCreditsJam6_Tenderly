@@ -22,7 +22,11 @@ public class InputController : MonoBehaviour
     private string hoverPlantString = "";
     private Tile hoverGroudTile;
     private Tile hoverPlantTile;
+    // Tool Selection
+    public string activeTool = "shovel";
     // Water Placement
+    public int waterInventory = 6;
+    public Text waterText;
 
     void Start()
     {
@@ -31,6 +35,9 @@ public class InputController : MonoBehaviour
 
         // Initialize hover text to be empty.
         hoverText.text = "";
+
+        // set water inventory
+        waterText.text = waterInventory.ToString();
     }
 
     void LateUpdate()
@@ -114,9 +121,11 @@ public class InputController : MonoBehaviour
         }
 
         // Water Placement: Place Water in the tile under the mouse.
-        if (Input.GetKeyDown("space"))
+        if (Input.GetKeyDown("space") && waterInventory > 0)
         {
             grid.GetComponent<GridManager>().PlaceWater(cellPos);
+            waterInventory = waterInventory - 1;
+            waterText.text = waterInventory.ToString();
         }
 
         // Clear Tile: Clears off plants in the tile, if there are any.
@@ -124,5 +133,7 @@ public class InputController : MonoBehaviour
         {
             grid.GetComponent<GridManager>().ClearPlants(cellPos);
         }
+
+        //
     }
 }
