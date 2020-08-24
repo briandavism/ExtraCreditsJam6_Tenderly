@@ -28,6 +28,7 @@ public class InputController : MonoBehaviour
     public Button setShovel;
     public Image BucketGlow;
     public Image ShovelGlow;
+    public static bool disableTool = false;
 
     // Water Placement
     public static int waterInventory = 99;
@@ -77,15 +78,25 @@ public class InputController : MonoBehaviour
         //Left click to use tool
         if (Input.GetMouseButtonDown(0))
         {
-            if (activeTool == "shovel")
+            // If mouse position is over the tool buttons, don't use a tool!
+            if (!disableTool)
             {
-                grid.GetComponent<GridManager>().ClearPlants(cellPos);
+                if (activeTool == "shovel")
+                {
+                    // TODO: Remove water if water is shoveled.
+                    grid.GetComponent<GridManager>().ClearPlants(cellPos);
+                }
+                else
+                {
+                    // If waterInventory is > 0, then you can place water.
+                    if (waterInventory > 0)
+                    {
+                        grid.GetComponent<GridManager>().PlaceWater(cellPos);
+                        waterInventory--;
+                    }
+                }
             }
-            else
-            {
-                grid.GetComponent<GridManager>().PlaceWater(cellPos);
-                waterInventory = waterInventory - 1;
-            }
+
         }
 
         // On middle mouse click, prepare to drag.
@@ -176,7 +187,5 @@ public class InputController : MonoBehaviour
             grid.GetComponent<GridManager>().ClearPlants(cellPos);
         }
 
-        // Tool Selector
-      
     }
 }

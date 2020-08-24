@@ -262,7 +262,7 @@ public class GridManager : MonoBehaviour
      */
     public void CheckForMerge(Vector3Int tilePosition)
     {
-        
+        return;
         // Degbug
         Debug.Log("Tile at: " + tilePosition + " will merge after " + mergeDelay + "seconds.");
 
