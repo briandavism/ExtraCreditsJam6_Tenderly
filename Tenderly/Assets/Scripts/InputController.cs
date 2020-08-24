@@ -24,6 +24,11 @@ public class InputController : MonoBehaviour
     private Tile hoverPlantTile;
     // Tool Selection
     public string activeTool = "shovel";
+    public Button setBucket;
+    public Button setShovel;
+    public Image BucketGlow;
+    public Image ShovelGlow;
+
     // Water Placement
     public int waterInventory = 6;
     public Text waterText;
