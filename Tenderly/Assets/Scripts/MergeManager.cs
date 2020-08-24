@@ -5,22 +5,15 @@ using UnityEngine.Tilemaps;
 
 public class MergeManager : MonoBehaviour
 {
-    public static List<Recipe> recipeMasterList;
-
-    private void Start()
-    {
-        // Populate the recipeMasterList!
-
-        
-    }
-
-
     // Attempt Merge: Given a tilemap of plants and a Vector3Int position, can the tile at this location merge?
     //  If so, return the Vector3Int of the resulting merge, which can differ from the orignial tile.
     public static Vector3Int AttemptMerge(Tilemap plantTiles, Vector3Int tilePosition)
     {
+
         // What will we eventually return? Initially, a null value until we find a valid merge.
         Vector3Int chosenTileLocation = new Vector3Int();
+        Debug.Log("DBug Location: " + chosenTileLocation);
+        return chosenTileLocation;
 
         // What type of tile am I?
         string tileName = plantTiles.GetTile<Tile>(tilePosition).name;
@@ -29,7 +22,6 @@ public class MergeManager : MonoBehaviour
         // Also create a list of the desired upgrade that cooresponds 1 to 1 indexwise with completed recipes.
         List<List<Vector3Int>> completedRecipes = new List<List<Vector3Int>>();
         List<string> potentialTileNames = new List<string>();
-
         // Who are my neighboring triples?
         List<List<Vector3Int>> tileTriples = GetClusters(plantTiles, tilePosition);
         tileTriples.AddRange(GetTendrils(plantTiles, tilePosition));
@@ -52,9 +44,23 @@ public class MergeManager : MonoBehaviour
         // First, pick one of the completedRecipes by some method. 
         // TODO: By some other method than just random?
         int randomInt = Random.Range(0, completedRecipes.Count);
+
+        // If there are no completedRecipes, we can terminate early.
+        if (completedRecipes.Count <= 0)
+        {
+            return chosenTileLocation;
+        }
+
+        Debug.Log("RandomInt: " + randomInt);
+        Debug.Log("completedRecipes: " + completedRecipes);
+        Debug.Log("completedRecipes count: " + completedRecipes.Count);
+
         List<Vector3Int> chosenTriple = completedRecipes[randomInt];
+        Debug.Log("Over.");
         Dictionary<string, Tile> plantDictionary = plantTiles.GetComponent<PlantTiles>().plantDictionary;
         string plantName = "";
+        Debug.Log("Here.");
+
 
         // From the chosenTriple, choose one of the tiles in the triple to upgrade. 
         randomInt = Random.Range(0, chosenTriple.Count);
@@ -63,7 +69,6 @@ public class MergeManager : MonoBehaviour
             // If this tile is not the chosen tile, clear it.
             if (randomInt != tripleIndex)
             {
-                // TODO: How to set the tile to empty?
                 plantName = potentialTileNames[tripleIndex];
                 plantTiles.SetTile(chosenTriple[tripleIndex], plantDictionary[plantName]);
             } else
@@ -74,7 +79,7 @@ public class MergeManager : MonoBehaviour
                 plantTiles.SetTile(chosenTriple[tripleIndex], plantDictionary[plantName]);
             }
         }
-
+        Debug.Log("There.");
         return chosenTileLocation;
     }
 
@@ -88,10 +93,32 @@ public class MergeManager : MonoBehaviour
         //  as values. // TODO use custom dictionary to instantiate faster.
         Dictionary<string, int> tripleDict = new Dictionary<string, int>(); 
         foreach(Vector3Int tile in triple)
-        { 
-            tripleDict[plantTiles.GetTile(tile).name]  += 1;
+        {
+            // If there is a plant at the tile location, get it's name.
+            if (plantTiles.GetTile(tile) != null)
+            {
+                string key = plantTiles.GetTile(tile).name;
+
+                // If this til.name is new, add it to the dictionary, else increment by 1.
+                if (!tripleDict.ContainsKey(key))
+                {
+                    tripleDict.Add(key, 1);
+                }
+                else
+                {
+                    tripleDict[key] += 1;
+                }
+            }
         }
 
+        // Call up the RecipeManager scripts RecipeInMasterDict function to check if the tripleDict is a valid recipe.
+        string resultRecipe = RecipeManager.RecipeInMasterDict(tripleDict);
+
+        // Return the resultRecipe, which may be a string or may be null.
+        return resultRecipe;
+
+
+        /*
         // Next, for every recipes, check the triple against the recipes in a recipeMasterList to find a match. 
         // Note that we want to maintain a list of valid recipe indices.
         List<int> validRecipeIndices = new List<int>(); // TODO: Is this needed? What could it be used for?
@@ -114,7 +141,7 @@ public class MergeManager : MonoBehaviour
         int randomInt = Random.Range(0, potentialRecipes.Count);
         string chosenRecipe = potentialRecipes[randomInt];
 
-        return chosenRecipe;
+        return chosenRecipe; */
     }
 
 

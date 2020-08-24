@@ -21,6 +21,7 @@ public class GridManager : MonoBehaviour
     public Dictionary<Tile, List<Tile>> plantTilePalette;
     // For Plant Merging
     public float mergeDelay = 5.0f;
+    public float spawnChance = 0.005f;
 
     // Private variables
     private Vector3Int[] cubeDirections = HexMath.cubeDirections;
@@ -182,7 +183,7 @@ public class GridManager : MonoBehaviour
                             // Spawn something from the barren plant list.
                             foreach (Tile tile in spawnOptions)
                             {
-                                if ((Random.Range(0f, 1f)) < 0.05f)
+                                if ((Random.Range(0f, 1f)) < spawnChance)
                                 {
                                     plantTiles.SetTile(tilePosition, tile);
                                     // Be sure to check if this tile can merge!
@@ -195,7 +196,7 @@ public class GridManager : MonoBehaviour
                             // Spawn something from the soil plant list.
                             foreach (Tile tile in spawnOptions)
                             {
-                                if ((Random.Range(0f, 1f)) < 0.05f)
+                                if ((Random.Range(0f, 1f)) < spawnChance)
                                 {
                                     plantTiles.SetTile(tilePosition, tile);
                                     // Be sure to check if this tile can merge!
@@ -208,7 +209,7 @@ public class GridManager : MonoBehaviour
                             // Spawn something from the marsh plant list.
                             foreach (Tile tile in spawnOptions)
                             {
-                                if ((Random.Range(0f, 1f)) < 0.05f)
+                                if ((Random.Range(0f, 1f)) < spawnChance)
                                 {
                                     plantTiles.SetTile(tilePosition, tile);
                                     // Be sure to check if this tile can merge!
@@ -221,7 +222,7 @@ public class GridManager : MonoBehaviour
                             // Spawn something from the water plant list.
                             foreach (Tile tile in spawnOptions)
                             {
-                                if ((Random.Range(0f, 1f)) < 0.05f)
+                                if ((Random.Range(0f, 1f)) < spawnChance)
                                 {
                                     plantTiles.SetTile(tilePosition, tile);
                                     // Be sure to check if this tile can merge!
@@ -244,20 +245,23 @@ public class GridManager : MonoBehaviour
     /* Merge:
      *  - Given a tile position, attempt to use it to merge into a new plant nearby.
      */
-    IEnumerator CheckForMerge(Vector3Int tilePosition)
+    public void CheckForMerge(Vector3Int tilePosition)
     {
+        
         // Degbug
         Debug.Log("Tile at: " + tilePosition + " will merge after " + mergeDelay + "seconds.");
-        yield return new WaitForSeconds(mergeDelay);
 
         // Hey MergeManager, given this tile's Vector3Int position, go try to merge it into a valid tile.
         Vector3Int newPlantLocation = MergeManager.AttemptMerge(plantTiles, tilePosition);
 
-        //
-        if(newPlantLocation != null)
+        Debug.Log("newplant at: " + newPlantLocation);
+
+
+        // 
+        if (newPlantLocation == null)
         {
             // Since there is a new tile, we want to check it for merges as well, but maybe after a little longer.
-            CheckForMerge(newPlantLocation);
+            //CheckForMerge(newPlantLocation);
         }
 
         // If the MergeManager AttemptMerge() was successful, it should return a Vector3Int for the tile it
@@ -294,6 +298,7 @@ public class GridManager : MonoBehaviour
         Vector3Int origin = new Vector3Int(0, 0, 0);
         Vector3Int target = new Vector3Int(2, 2, 0);
         Vector3Int targetCube = new Vector3Int(2, 2, -4);
+
 
         // Place Water testing:
         /* 

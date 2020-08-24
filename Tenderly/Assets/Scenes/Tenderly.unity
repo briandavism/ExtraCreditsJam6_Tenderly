@@ -251,6 +251,8 @@ GameObject:
   - component: {fileID: 307085491}
   - component: {fileID: 307085490}
   - component: {fileID: 307085492}
+  - component: {fileID: 307085494}
+  - component: {fileID: 307085493}
   m_Layer: 0
   m_Name: Grid
   m_TagString: Untagged
@@ -300,7 +302,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   groundTiles: {fileID: 609464620}
   plantTiles: {fileID: 960105592}
-  spawnTimer: 2
+  spawnTimer: 1
   spawnRadius: 30
   groundTilePalette:
   - {fileID: 11400000, guid: 64b23c51415cc46458bd87aefebba6e0, type: 2}
@@ -326,6 +328,31 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 74317eb4383868b409749262730d0341, type: 2}
   - {fileID: 11400000, guid: f6297fc532a4f414cb916b6adbb868cc, type: 2}
   mergeDelay: 5
+  spawnChance: 0.0005
+--- !u!114 &307085493
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 307085489}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56b7b56a0fe08214cb0d53fe6dfd96c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &307085494
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 307085489}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe8ee59c4c6200c42b2c04baf58c5e7e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &333586049
 GameObject:
   m_ObjectHideFlags: 0
