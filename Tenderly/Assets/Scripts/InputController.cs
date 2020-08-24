@@ -139,6 +139,7 @@ public class InputController : MonoBehaviour
             grid.GetComponent<GridManager>().ClearPlants(cellPos);
         }
 
-        //
+        // Tool Selector
+        if  (setBucket.onClick)
     }
 }

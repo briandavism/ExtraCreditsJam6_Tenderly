@@ -1,0 +1,83 @@
+[
+  {
+    "Name": "Bracken",
+    "Ingredient1": "Fiddlehead",
+    "Count1": 2,
+    "Ingredient2": "Grass",
+    "Count2": 1,
+    "Ingredient3": "",
+    "Count3": ""
+  },
+  {
+    "Name": "Bullrush",
+    "Ingredient1": "SoftRush",
+    "Count1": 2,
+    "Ingredient2": "Grass",
+    "Count2": 1,
+    "Ingredient3": "",
+    "Count3": ""
+  },
+  {
+    "Name": "Waterlily",
+    "Ingredient1": "Lilypad",
+    "Count1": 2,
+    "Ingredient2": "Algae",
+    "Count2": 1,
+    "Ingredient3": "",
+    "Count3": ""
+  },
+  {
+    "Name": "CallaLily",
+    "Ingredient1": "Waterlily",
+    "Count1": 1,
+    "Ingredient2": "BullRush",
+    "Count2": 2,
+    "Ingredient3": "",
+    "Count3": ""
+  },
+  {
+    "Name": "Mustard",
+    "Ingredient1": "Grass",
+    "Count1": 2,
+    "Ingredient2": "Bracken",
+    "Count2": 1,
+    "Ingredient3": "",
+    "Count3": ""
+  },
+  {
+    "Name": "Shrub",
+    "Ingredient1": "Bracken",
+    "Count1": 3,
+    "Ingredient2": "",
+    "Count2": "",
+    "Ingredient3": "",
+    "Count3": ""
+  },
+  {
+    "Name": "CorpseFlower",
+    "Ingredient1": "CallaLily",
+    "Count1": 2,
+    "Ingredient2": "Waterlily",
+    "Count2": 1,
+    "Ingredient3": "",
+    "Count3": ""
+  },
+  {
+    "Name": "Fireweed",
+    "Ingredient1": "Mustard",
+    "Count1": 2,
+    "Ingredient2": "Bracken",
+    "Count2": 1,
+    "Ingredient3": "",
+    "Count3": ""
+  },
+  {
+    "Name": "Sumac",
+    "Ingredient1": "Shrub",
+    "Count1": 2,
+    "Ingredient2": "CallaLily",
+    "Count2": 1,
+    "Ingredient3": "",
+    "Count3": ""
+  }
+]
