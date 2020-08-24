@@ -177,18 +177,22 @@ public class GridManager : MonoBehaviour
                 if (groundTile != null && (plantTile is null || plantTile.name == "Empty"))
                 {
                     List<Tile> spawnOptions = plantTilePalette[groundTile];
+                    float tempSpawnChance = spawnChance;
                     switch (groundTile.name)
                     {
                         case "Barren":
                             // Spawn something from the barren plant list.
                             foreach (Tile tile in spawnOptions)
                             {
-                                if ((Random.Range(0f, 1f)) < spawnChance)
+                                if ((Random.Range(0f, 1f)) < tempSpawnChance)
                                 {
                                     plantTiles.SetTile(tilePosition, tile);
                                     // Be sure to check if this tile can merge!
                                     CheckForMerge(tilePosition);
                                     break;
+                                } else
+                                {
+                                    tempSpawnChance = tempSpawnChance * 0.75f;
                                 }
                             }
                             break;
@@ -196,12 +200,16 @@ public class GridManager : MonoBehaviour
                             // Spawn something from the soil plant list.
                             foreach (Tile tile in spawnOptions)
                             {
-                                if ((Random.Range(0f, 1f)) < spawnChance)
+                                if ((Random.Range(0f, 1f)) < tempSpawnChance)
                                 {
                                     plantTiles.SetTile(tilePosition, tile);
                                     // Be sure to check if this tile can merge!
                                     CheckForMerge(tilePosition);
                                     break;
+                                }
+                                else
+                                {
+                                    tempSpawnChance = tempSpawnChance * 0.75f;
                                 }
                             }
                             break;
@@ -209,12 +217,16 @@ public class GridManager : MonoBehaviour
                             // Spawn something from the marsh plant list.
                             foreach (Tile tile in spawnOptions)
                             {
-                                if ((Random.Range(0f, 1f)) < spawnChance)
+                                if ((Random.Range(0f, 1f)) < tempSpawnChance)
                                 {
                                     plantTiles.SetTile(tilePosition, tile);
                                     // Be sure to check if this tile can merge!
                                     CheckForMerge(tilePosition);
                                     break;
+                                }
+                                else
+                                {
+                                    tempSpawnChance = tempSpawnChance * 0.75f;
                                 }
                             }
                             break;
@@ -222,12 +234,16 @@ public class GridManager : MonoBehaviour
                             // Spawn something from the water plant list.
                             foreach (Tile tile in spawnOptions)
                             {
-                                if ((Random.Range(0f, 1f)) < spawnChance)
+                                if ((Random.Range(0f, 1f)) < tempSpawnChance)
                                 {
                                     plantTiles.SetTile(tilePosition, tile);
                                     // Be sure to check if this tile can merge!
                                     CheckForMerge(tilePosition);
                                     break;
+                                }
+                                else
+                                {
+                                    tempSpawnChance = tempSpawnChance * 0.75f;
                                 }
                             }
                             break;
@@ -239,7 +255,6 @@ public class GridManager : MonoBehaviour
         }
         
     }
-
 
 
     /* Merge:
