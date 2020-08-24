@@ -10,17 +10,16 @@ public class GridManager : MonoBehaviour
     // Public variables
     public Tilemap groundTiles;
     public Tilemap plantTiles;
+    // For Plant Spawning Coroutine
+    public float spawnTimer;
+    public int spawnRadius;
     public List<Tile> groundTilePalette;
     public List<Tile> barrenPlants;
     public List<Tile> soilPlants;
     public List<Tile> marshPlants;
     public List<Tile> waterPlants;
-
     public Dictionary<Tile, List<Tile>> plantTilePalette;
-    // For Plant Spawning Coroutine
-    public float spawnTimer;
-    public int spawnRadius;
-    
+
     // Private variables
     private Vector3Int[] cubeDirections = {new Vector3Int(0, +1, -1),  // NW
                                             new Vector3Int(+1, 0, -1),  // NE
@@ -37,22 +36,32 @@ public class GridManager : MonoBehaviour
         Dbug();
 
         // To start spawning things, call the SpawnPlants method, which will start a coroutine.
-        Debug.Log("Here I am in the start function.");
         plantTilePalette = new Dictionary<Tile, List<Tile>>();
         plantTilePalette.Add(groundTilePalette[0], barrenPlants);
         plantTilePalette.Add(groundTilePalette[1], soilPlants);
         plantTilePalette.Add(groundTilePalette[2], marshPlants);
         plantTilePalette.Add(groundTilePalette[3], waterPlants);
-        Debug.Log("About to call SpawnPlants at: " + Time.time);
-
         StartCoroutine(SpawnPlants());
     }
 
-    // Update is called once per frame
-    void Update()
+    
+    // List shuffler: Given a list, shuffle it.
+    public List<T> ShuffleList<T>(List<T> list)
     {
+        System.Random random = new System.Random();
+        int n = list.Count;
 
+        for (int i = list.Count - 1; i > 1; i--)
+        {
+            int rnd = random.Next(i + 1);
+            T value = list[rnd];
+            list[rnd] = list[i];
+            list[i] = value;
+        }
+
+        return list;
     }
+
 
     /* Grid:
      *  - Fundamentally, there is a hexagonal grid of tiles.
@@ -283,6 +292,8 @@ public class GridManager : MonoBehaviour
                                 if ((Random.Range(0f, 1f)) < 0.05f)
                                 {
                                     plantTiles.SetTile(tilePosition, tile);
+                                    // Be sure to check if this tile can merge!
+                                    CheckForMerge(tilePosition);
                                     break;
                                 }
                             }
@@ -296,6 +307,8 @@ public class GridManager : MonoBehaviour
                                 if ((Random.Range(0f, 1f)) < 0.05f)
                                 {
                                     plantTiles.SetTile(tilePosition, tile);
+                                    // Be sure to check if this tile can merge!
+                                    CheckForMerge(tilePosition);
                                     break;
                                 }
                             }
@@ -307,6 +320,8 @@ public class GridManager : MonoBehaviour
                                 if ((Random.Range(0f, 1f)) < 0.05f)
                                 {
                                     plantTiles.SetTile(tilePosition, tile);
+                                    // Be sure to check if this tile can merge!
+                                    CheckForMerge(tilePosition);
                                     break;
                                 }
                             }
@@ -318,6 +333,8 @@ public class GridManager : MonoBehaviour
                                 if ((Random.Range(0f, 1f)) < 0.05f)
                                 {
                                     plantTiles.SetTile(tilePosition, tile);
+                                    // Be sure to check if this tile can merge!
+                                    CheckForMerge(tilePosition);
                                     break;
                                 }
                             }
@@ -371,9 +388,119 @@ public class GridManager : MonoBehaviour
      *          - If yes, pick one of the completed recipies, at random or by some other method.
      *              Then pick one of the tiles at random to become the new tile, based on the recipe.
      *          - If not, this tile isn't the center of a recipe.
-     *              
-     *                  
      */
+    public void CheckForMerge(Vector3Int tilePosition)
+    {
+        // What tile am I?
+        Tile tile = plantTiles.GetTile<Tile>(tilePosition);
+
+        // Create empty list of triples that we can add all valid recipes into.
+        // Also create a list of the desired upgrade that cooresponds 1 to 1 indexwise with completed recipes.
+        List<List<Tile>> completedRecipes = new List<List<Tile>>();
+        List<Tile> potentialMerges = new List<Tile>();
+
+        // Who are my neighboring triples?
+        List<List<Tile>> tileTriples = GetClusters(plantTiles, tilePosition);
+        tileTriples.AddRange(GetTendrils(plantTiles, tilePosition));
+
+        // For every triple, check if it forms a valid recipe and add to compleedRecipes list.
+        foreach (List<Tile> triple in tileTriples)
+        {
+            // ValidRecipe should return a Tile if this triple is a valid recipe, or a null otherwise.
+            Tile mergeIntoTile = MergeRecipies.ValidRecipe(triple);
+
+            if (mergeIntoTile != null)
+            {
+                completedRecipes.Add(triple);
+                potentialMerges.Add(mergeIntoTile);
+            }
+        }
+
+        // Now that we have every valid recipe, we just need to pick one from among them and complete the merge.
+        // TODO: Choose a List<Tile> of three tiles from among completedRecipes by some method.
+        // TODO: Choose one of the tiles in the triple to upgrade. ClearPlants() on the other two and
+        //  plantTiles.SetTile() this tile into the desired upgrade.
+    }
+
+
+    // Get Clusters: There are 15 unique clusters that form around a central tile.
+    // This method makes a list of them and returns them.
+    private List<List<Tile>> GetClusters(Tilemap tilemap, Vector3Int centerTilePosition)
+    {
+        List<List<Tile>> tileClusters = new List<List<Tile>>();
+
+        // The outer loop represents the 6 possible tiles that surround the central tile.
+        for (int i = 0; i < 6; i++)
+        {
+            // Add the center tile since it will be part of every cluster.
+            Tile centerTile = tilemap.GetTile<Tile>(centerTilePosition);
+            List<Tile> cluster = new List<Tile>();
+            cluster.Add(centerTile);
+
+            // Add the first outer loop tile of this cluster, based on its position relative to center.
+            // That is, centerTilePosition + cubeDirections. Of course we have to convert to and from cube coords.
+            Vector3Int targetCubePosition = cubeDirections[i] + OddrToCube(centerTilePosition);
+            Vector3Int targetOddrPosition = CubeToOddr(targetCubePosition);
+            Tile targetTile = tilemap.GetTile<Tile>(targetOddrPosition);
+            cluster.Add(targetTile);
+
+            // The inner loop goes through each unique third tile addition to the group.
+            for (int j = i+1; j < 6; j++)
+            {
+                // Add the inner loop tile of this cluster, based on its position relative to center.
+                // That is, centerTilePosition + cubeDirections. Of course we have to convert to and from cube coords.
+                targetCubePosition = cubeDirections[j] + OddrToCube(centerTilePosition);
+                targetOddrPosition = CubeToOddr(targetCubePosition);
+                targetTile = tilemap.GetTile<Tile>(targetOddrPosition);
+                cluster.Add(targetTile);
+
+                // Now add this cluster of three tiles to the tileClusters list.
+                tileClusters.Add(cluster);
+            }
+        }
+
+        return tileClusters;
+    }
+
+    // Get Tendrils: There are 18 unique tendrils that form using a given tile as a base, not including the
+    // tendrils that are also considered clusters.
+    private List<List<Tile>> GetTendrils(Tilemap tilemap, Vector3Int baseTilePosition)
+    {
+        List<List<Tile>> tileTendrils = new List<List<Tile>>();
+
+        // The for loop represents the 6 possible tiles that surround the base tile.
+        for (int i = 0; i < 6; i++)
+        {
+            // Add the center tile since it will be part of every tendril.
+            Tile baseTile = tilemap.GetTile<Tile>(baseTilePosition);
+            List<Tile> tendril = new List<Tile>();
+            tendril.Add(baseTile);
+
+            // Add this loop's tile to this tednril, based on its position relative to the base.
+            // That is, baseTilePosition + cubeDirections. Of course we have to convert to and from cube coords.
+            Vector3Int targetCubePosition = cubeDirections[i] + OddrToCube(baseTilePosition);
+            Vector3Int targetOddrPosition = CubeToOddr(targetCubePosition);
+            Tile targetTile = tilemap.GetTile<Tile>(targetOddrPosition);
+            tendril.Add(targetTile);
+
+            // The third tile slightly is more complicated. It can be in any three directions based on the initial
+            // direction, deviating by -1, 0, and +1, and making sure to wrap from -1 to 5.
+            for (int d = -1; d <=1; d++)
+            {
+                int newDirection = ((i + d) % 6 + 6) % 6;
+                targetCubePosition = cubeDirections[newDirection] + OddrToCube(baseTilePosition);
+                targetOddrPosition = CubeToOddr(targetCubePosition);
+                targetTile = tilemap.GetTile<Tile>(targetOddrPosition);
+                tendril.Add(targetTile);
+
+                // Now add this tendril of three tiles to the tileTendrils list.
+                tileTendrils.Add(tendril);
+            }
+        }
+
+        return tileTendrils;
+    }
+
 
     /* Clear Plants:
      * - Clear the tile under the cursor of plants, if any.
