@@ -140,6 +140,6 @@ public class InputController : MonoBehaviour
         }
 
         // Tool Selector
-        if  (setBucket.onClick)
+        
     }
 }
