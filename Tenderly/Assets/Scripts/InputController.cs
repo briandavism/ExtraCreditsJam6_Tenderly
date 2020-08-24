@@ -23,14 +23,14 @@ public class InputController : MonoBehaviour
     private Tile hoverGroudTile;
     private Tile hoverPlantTile;
     // Tool Selection
-    public string activeTool = "shovel";
+    public static string activeTool = "shovel";
     public Button setBucket;
     public Button setShovel;
     public Image BucketGlow;
     public Image ShovelGlow;
 
     // Water Placement
-    public int waterInventory = 6;
+    public static int waterInventory = 99;
     public Text waterText;
 
     void Start()
@@ -43,10 +43,30 @@ public class InputController : MonoBehaviour
 
         // set water inventory
         waterText.text = waterInventory.ToString();
+
     }
 
+    void Update()
+    {
+        //Update Water Inventory Text
+        waterText.text = waterInventory.ToString();
+
+        if(activeTool == "shovel")
+        {
+            BucketGlow.color = new Color (1, 1, 1, 0);
+            ShovelGlow.color = new Color(1, 1, 1, 1);
+        }
+        else
+        {
+            BucketGlow.color = new Color(1, 1, 1, 1);
+            ShovelGlow.color = new Color(1, 1, 1, 0);
+        }
+    }
     void LateUpdate()
     {
+        
+
+        
         /************** Input Handler logic for various user inputs. **************/
         // Useful parameters:
         // The Vector3Int corresponding to the mouse position over the grid.
@@ -54,8 +74,22 @@ public class InputController : MonoBehaviour
         // The tiles, ground and plant, that may be on the grid under the mouse.
         List<Tile> tiles = grid.GetComponent<GridManager>().GetTiles(cellPos);
 
-        // On mouse click, prepare to drag.
-        if (Input.GetMouseButton(0))
+        //Left click to use tool
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (activeTool == "shovel")
+            {
+                grid.GetComponent<GridManager>().ClearPlants(cellPos);
+            }
+            else
+            {
+                grid.GetComponent<GridManager>().PlaceWater(cellPos);
+                waterInventory = waterInventory - 1;
+            }
+        }
+
+        // On middle mouse click, prepare to drag.
+        if (Input.GetMouseButton(2))
         {
             cameraDiff = (Camera.main.ScreenToWorldPoint(Input.mousePosition)) - Camera.main.transform.position;
             if (mouseDrag == false)
@@ -123,6 +157,9 @@ public class InputController : MonoBehaviour
             {
                 hoverText.text = hoverGroundString + ":" + hoverPlantString;
             }
+
+            // Update Water Text
+
         }
 
         // Water Placement: Place Water in the tile under the mouse.
@@ -140,6 +177,6 @@ public class InputController : MonoBehaviour
         }
 
         // Tool Selector
-        
+      
     }
 }
