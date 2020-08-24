@@ -325,6 +325,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 52331b291013e7e49bd0b6a717e6a295, type: 2}
   - {fileID: 11400000, guid: 74317eb4383868b409749262730d0341, type: 2}
   - {fileID: 11400000, guid: f6297fc532a4f414cb916b6adbb868cc, type: 2}
+  mergeDelay: 5
 --- !u!1 &333586049
 GameObject:
   m_ObjectHideFlags: 0
@@ -60415,6 +60416,7 @@ GameObject:
   - component: {fileID: 960105590}
   - component: {fileID: 960105592}
   - component: {fileID: 960105591}
+  - component: {fileID: 960105593}
   m_Layer: 0
   m_Name: PlantTilemap
   m_TagString: Untagged
@@ -61785,6 +61787,34 @@ Tilemap:
     e31: 0
     e32: 0
     e33: 1
+--- !u!114 &960105593
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 960105589}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c7b6b6931a38e64d9288f2198fe92b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  plantList:
+  - {fileID: 11400000, guid: 0a76bbf87dd10a74d96e5daa4fda8da8, type: 2}
+  - {fileID: 11400000, guid: 52331b291013e7e49bd0b6a717e6a295, type: 2}
+  - {fileID: 11400000, guid: 119ab2e2d889bbb40ab817974ea711bc, type: 2}
+  - {fileID: 11400000, guid: bbd501a958ba9564c91723d6c9f2550e, type: 2}
+  - {fileID: 11400000, guid: 530a8bece8f220c46a407815c16f6000, type: 2}
+  - {fileID: 11400000, guid: 7dfe886aa58c86a4db5939cf55406517, type: 2}
+  - {fileID: 11400000, guid: 61415e284c2b6dd41994638e37767a32, type: 2}
+  - {fileID: 11400000, guid: c6ba18801052ae04184ad1b9e0aa03a9, type: 2}
+  - {fileID: 11400000, guid: 13132ff1f78a48746bffd0a701d830dd, type: 2}
+  - {fileID: 11400000, guid: 74317eb4383868b409749262730d0341, type: 2}
+  - {fileID: 11400000, guid: bb6138a3f5fdd044a9af6f37d0282f32, type: 2}
+  - {fileID: 11400000, guid: 8e0829f1c19f63246abfe67d6c2d79ed, type: 2}
+  - {fileID: 11400000, guid: 179c3dab1322c9d469ddda42aa1c7d43, type: 2}
+  - {fileID: 11400000, guid: ff45e596f2bd9dc4b99842e6198e2208, type: 2}
+  - {fileID: 11400000, guid: f6297fc532a4f414cb916b6adbb868cc, type: 2}
 --- !u!1 &986893602
 GameObject:
   m_ObjectHideFlags: 0

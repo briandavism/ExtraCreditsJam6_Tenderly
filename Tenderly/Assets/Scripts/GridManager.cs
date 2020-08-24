@@ -19,14 +19,11 @@ public class GridManager : MonoBehaviour
     public List<Tile> marshPlants;
     public List<Tile> waterPlants;
     public Dictionary<Tile, List<Tile>> plantTilePalette;
+    // For Plant Merging
+    public float mergeDelay = 5.0f;
 
     // Private variables
-    private Vector3Int[] cubeDirections = {new Vector3Int(0, +1, -1),  // NW
-                                            new Vector3Int(+1, 0, -1),  // NE
-                                            new Vector3Int(+1, -1, 0),  // E
-                                            new Vector3Int(0, -1, +1),  // SE
-                                            new Vector3Int(-1, 0, +1),  // SW
-                                            new Vector3Int(-1, +1, 0)}; // W
+    private Vector3Int[] cubeDirections = HexMath.cubeDirections;
                                             
                                             
     // Start is called before the first frame update
@@ -63,116 +60,11 @@ public class GridManager : MonoBehaviour
     }
 
 
-    /* Grid:
-     *  - Fundamentally, there is a hexagonal grid of tiles.
-     *  - Each tile can be some kind of ground type.
-     *      - Current assumption is 4 types: Water, Marsh, Soil, Barren.
-     *  - Unity uses Odd Offset coordinates, while easy algorithms use cubic.
-     */
-    /*************************************: CUBE AND ODDR FUNCTIONS :********************************************/
-    // Cube coords to odd pointy top offset coords.
-    // Taken from https://www.redblobgames.com/grids/hexagons/#conversions-offset
-    public Vector3Int CubeToOddr(Vector3Int cube)
-    {
-        int col = cube.x + (cube.y - (cube.y & 1)) / 2;
-        int row = cube.y;
-        return new Vector3Int(col, row, 0);
-    }
-
-    // Odd pointy top offset coords to cube coords.
-    // Taken from https://www.redblobgames.com/grids/hexagons/#conversions-offset
-    public Vector3Int OddrToCube(Vector3Int oddr)
-    {
-        int x = oddr.x - (oddr.y - (oddr.y & 1)) / 2;
-        int y = oddr.y;
-        int z = -x - y;
-        return new Vector3Int(x, y, z);
-    }
-    
-    // Cube directions from a simple int representation of the 6 directions.
-    // NW is 0, NE is 1, so on clockwise until W is 5.
-    public Vector3Int CubeDirection(int direction)
-    {
-        return cubeDirections[direction];
-    }
-
-    // Cube neighbors finds the neighbor in a direction from a given Vector3int cube coord.
-    // NW is 0, NE is 1, so on clockwise until W is 5.
-    public Vector3Int CubeNeighbor(Vector3Int cube, int direction)
-    {
-        return cube + CubeDirection(direction);
-    }
-
-    // To find the oddr offset neighbor, just covert to cube and use cubic function.
-    public Vector3Int OddrNeighbor(Vector3Int oddr, int direction)
-    {
-        return CubeToOddr(CubeNeighbor(OddrToCube(oddr), direction));
-    }
-
-    // Cube distance: Given two cubes, a and b,find distance, return int.
-    public int CubeDistance(Vector3Int cubeA, Vector3Int cubeB)
-    {
-        return Mathf.Max(Mathf.Abs(cubeA.x - cubeB.x), Mathf.Abs(cubeA.y - cubeB.y), Mathf.Abs(cubeA.z - cubeB.z));
-    }
-
-    // Oddr distance: Given two hexes, a and b, convert from oddr to cube, find distance, return int.
-    public int OddrDistance(Vector3Int oddrA, Vector3Int oddrB)
-    {
-        Vector3Int cubeA = OddrToCube(oddrA);
-        Vector3Int cubeB = OddrToCube(oddrB);
-
-        return CubeDistance(cubeA, cubeB);
-    }
-
-    // Cuve Range: Given a Cube coord and a distance, return a list of tiles that fall within the range.
-    public List<Vector3Int> CubeRange(Vector3Int cube, int distance)
-    {
-        // List of tiles in Cube coords, not oddr coords.
-        List<Vector3Int> results = new List<Vector3Int>();
-
-        // From the center x, search from d distance in the negative and positive directions from x.
-        for (int x = -distance; x <= distance; x++)
-        {
-            for (int y = Mathf.Max(-distance, -x - distance); y <= Mathf.Min(distance, -x + distance); y++)
-            {
-                int z = -x - y;
-                results.Add(cube + new Vector3Int(x, y, z));
-            }
-        }
-
-        return results;
-    }
-
-    // Oddr Range: Given an Oddr coord and a distance, return a list of tiles that fall within the range.
-    public List<Vector3Int> OddrRange(Vector3Int oddr, int distance)
-    {
-        // List of tiles in Oddr coords.
-        List<Vector3Int> results = new List<Vector3Int>();
-        Vector3Int cube = OddrToCube(oddr);
-
-        // From the center x, search from d distance in the negative and positive directions from x.
-        for (int x = -distance; x <= distance; x++)
-        {
-            for (int y = Mathf.Max(-distance, -x - distance); y <= Mathf.Min(distance, -x + distance); y++)
-            {
-                int z = -x - y;
-                results.Add(CubeToOddr(cube + new Vector3Int(x, y, z)));
-            }
-        }
-
-        return results;
-
-        // DEBUG MATH
-        // Distance = 5, x = -4 for this part of the loop.
-        // What is the max of (-5 and --4 - 5)? -1.
-        // What is the min of (5 and --4 +5) 5?
-    }
-
     // Get Tile: Givent a Vector3Int, return the tile or tiles that are beneath it.
     public List<Tile> GetTiles(Vector3Int mousePos)
     {
         List<Tile> results = new List<Tile>();
-        
+
         // There should always be a ground tile. TODO: Error checking. Possibly use bounds to validate?
         if (groundTiles.HasTile(mousePos))
         {
@@ -189,6 +81,7 @@ public class GridManager : MonoBehaviour
         return results;
     }
 
+
     /*************************************: GAME MECHANICS :********************************************/
     /* Water:
      *  - In the beginning, all is barren.
@@ -202,7 +95,7 @@ public class GridManager : MonoBehaviour
     {
         // First, get a list of tiles within 5 tiles of the water source. Increase their wetness by 1.
         // OR, for now, just make them instantly dirt.
-        List<Vector3Int> tileVectors = OddrRange(waterSource, 5);
+        List<Vector3Int> tileVectors = HexMath.OddrRange(waterSource, 5);
         List<Tile> tiles = new List<Tile>();
         foreach (Vector3Int tilePosition in tileVectors)
         {
@@ -217,7 +110,7 @@ public class GridManager : MonoBehaviour
         }
 
         // Now increase the wetness of tiles within 2.
-        tileVectors = OddrRange(waterSource, 2);
+        tileVectors = HexMath.OddrRange(waterSource, 2);
         tiles = new List<Tile>();
         foreach (Vector3Int tilePosition in tileVectors)
         {
@@ -270,7 +163,7 @@ public class GridManager : MonoBehaviour
         {
             // Spawn plants on some tiles within spawnRadius originating from the mouse.
             Vector3Int spawnOrigin = GetComponentInParent<Grid>().WorldToCell(Camera.main.ScreenToWorldPoint(Input.mousePosition));
-            List<Vector3Int> tileVectors = OddrRange(spawnOrigin, spawnRadius);
+            List<Vector3Int> tileVectors = HexMath.OddrRange(spawnOrigin, spawnRadius);
             List<Tile> tiles = new List<Tile>();
             foreach (Vector3Int tilePosition in tileVectors)
             {
@@ -351,160 +244,28 @@ public class GridManager : MonoBehaviour
 
 
     /* Merge:
-     *  - For each tile, add a random 4 digit decimal from 0 to 9999 to the Tier number of the object.
-     *  - Sort the objects from lowest to highest.
-     *  - For each object in this list, check to see if something happens.
-     *      - Tier 0: Empty tile spawn new objects
-     *          - Water: Lilypad
-     *          - Marsh: Soft Rush
-     *          - Soil: Fiddlehead
-     *      - Tier 1:
-     *          - Water: Lilypad * 3 = Water Lily
-     *          - Marsh: Soft Rush * 3 = Bullrush
-     *          - Soil: Fiddlehead * 3 = Bracken
-     *  - When something happens, 
-     *  
-     *  
-     *  - For each tier, keep a queue of tiles belonging to that tier.
-     *  - For each tier, randomly iterate over each tile in that tier queue to check for an event. 
-     *      - 
-     *  - When a tile leaves a tier due to an event, add it to the appropriate tier's list and remove
-     *      it from its previous tier.
-     *      
-     *  - Am I part of a recipie?
-     *      - Create an empty list of completed recipies.
-     *      - Create an empty list of partial recipies.
-     *      - Populate a list of initial recipies that require me.
-     *      - Enque my neighbors randomly.
-     *      - Look at my next neighbor. 
-     *          - For every partial recipie, does the neighbor complete it?
-     *              - If it does, make a new completed recipe out of the partial recipie's tiles and
-     *                  this new neighbor tile. Don't remove the partial recipie though.
-     *          - For every initial recipe, does the neighbor also help fulfill it?
-     *              - If it does, make a new partial recipe out of the neighbor and my tiles.
-     *                  Don't remove the initial recipe though.
-     *              - If it doesn't, this neighbor can't be used to make anything with me. Move on.
-     *      - When no neighbors remain, were there completed recipies?
-     *          - If yes, pick one of the completed recipies, at random or by some other method.
-     *              Then pick one of the tiles at random to become the new tile, based on the recipe.
-     *          - If not, this tile isn't the center of a recipe.
+     *  - Given a tile position, attempt to use it to merge into a new plant nearby.
      */
-    public void CheckForMerge(Vector3Int tilePosition)
+    IEnumerator CheckForMerge(Vector3Int tilePosition)
     {
-        // What tile am I?
-        Tile tile = plantTiles.GetTile<Tile>(tilePosition);
+        // Degbug
+        Debug.Log("Tile at: " + tilePosition + " will merge after " + mergeDelay + "seconds.");
+        yield return new WaitForSeconds(mergeDelay);
 
-        // Create empty list of triples that we can add all valid recipes into.
-        // Also create a list of the desired upgrade that cooresponds 1 to 1 indexwise with completed recipes.
-        List<List<Tile>> completedRecipes = new List<List<Tile>>();
-        List<Tile> potentialMerges = new List<Tile>();
+        // Hey MergeManager, given this tile's Vector3Int position, go try to merge it into a valid tile.
+        Vector3Int newPlantLocation = MergeManager.AttemptMerge(plantTiles, tilePosition);
 
-        // Who are my neighboring triples?
-        List<List<Tile>> tileTriples = GetClusters(plantTiles, tilePosition);
-        tileTriples.AddRange(GetTendrils(plantTiles, tilePosition));
-
-        // For every triple, check if it forms a valid recipe and add to compleedRecipes list.
-        foreach (List<Tile> triple in tileTriples)
+        //
+        if(newPlantLocation != null)
         {
-            // ValidRecipe should return a Tile if this triple is a valid recipe, or a null otherwise.
-            Tile mergeIntoTile = MergeRecipies.ValidRecipe(triple);
-
-            if (mergeIntoTile != null)
-            {
-                completedRecipes.Add(triple);
-                potentialMerges.Add(mergeIntoTile);
-            }
+            // Since there is a new tile, we want to check it for merges as well, but maybe after a little longer.
+            CheckForMerge(newPlantLocation);
         }
 
-        // Now that we have every valid recipe, we just need to pick one from among them and complete the merge.
-        // TODO: Choose a List<Tile> of three tiles from among completedRecipes by some method.
-
-        for (int i = 0; i < completedRecipes.Count; i++)
-
-        {
-
-        }
-        // TODO: Choose one of the tiles in the triple to upgrade. ClearPlants() on the other two and
-        //  plantTiles.SetTile() this tile into the desired upgrade.
-    }
-
-
-    // Get Clusters: There are 15 unique clusters that form around a central tile.
-    // This method makes a list of them and returns them.
-    private List<List<Tile>> GetClusters(Tilemap tilemap, Vector3Int centerTilePosition)
-    {
-        List<List<Tile>> tileClusters = new List<List<Tile>>();
-
-        // The outer loop represents the 6 possible tiles that surround the central tile.
-        for (int i = 0; i < 6; i++)
-        {
-            // Add the center tile since it will be part of every cluster.
-            Tile centerTile = tilemap.GetTile<Tile>(centerTilePosition);
-            List<Tile> cluster = new List<Tile>();
-            cluster.Add(centerTile);
-
-            // Add the first outer loop tile of this cluster, based on its position relative to center.
-            // That is, centerTilePosition + cubeDirections. Of course we have to convert to and from cube coords.
-            Vector3Int targetCubePosition = cubeDirections[i] + OddrToCube(centerTilePosition);
-            Vector3Int targetOddrPosition = CubeToOddr(targetCubePosition);
-            Tile targetTile = tilemap.GetTile<Tile>(targetOddrPosition);
-            cluster.Add(targetTile);
-
-            // The inner loop goes through each unique third tile addition to the group.
-            for (int j = i+1; j < 6; j++)
-            {
-                // Add the inner loop tile of this cluster, based on its position relative to center.
-                // That is, centerTilePosition + cubeDirections. Of course we have to convert to and from cube coords.
-                targetCubePosition = cubeDirections[j] + OddrToCube(centerTilePosition);
-                targetOddrPosition = CubeToOddr(targetCubePosition);
-                targetTile = tilemap.GetTile<Tile>(targetOddrPosition);
-                cluster.Add(targetTile);
-
-                // Now add this cluster of three tiles to the tileClusters list.
-                tileClusters.Add(cluster);
-            }
-        }
-
-        return tileClusters;
-    }
-
-    // Get Tendrils: There are 18 unique tendrils that form using a given tile as a base, not including the
-    // tendrils that are also considered clusters.
-    private List<List<Tile>> GetTendrils(Tilemap tilemap, Vector3Int baseTilePosition)
-    {
-        List<List<Tile>> tileTendrils = new List<List<Tile>>();
-
-        // The for loop represents the 6 possible tiles that surround the base tile.
-        for (int i = 0; i < 6; i++)
-        {
-            // Add the center tile since it will be part of every tendril.
-            Tile baseTile = tilemap.GetTile<Tile>(baseTilePosition);
-            List<Tile> tendril = new List<Tile>();
-            tendril.Add(baseTile);
-
-            // Add this loop's tile to this tednril, based on its position relative to the base.
-            // That is, baseTilePosition + cubeDirections. Of course we have to convert to and from cube coords.
-            Vector3Int targetCubePosition = cubeDirections[i] + OddrToCube(baseTilePosition);
-            Vector3Int targetOddrPosition = CubeToOddr(targetCubePosition);
-            Tile targetTile = tilemap.GetTile<Tile>(targetOddrPosition);
-            tendril.Add(targetTile);
-
-            // The third tile slightly is more complicated. It can be in any three directions based on the initial
-            // direction, deviating by -1, 0, and +1, and making sure to wrap from -1 to 5.
-            for (int d = -1; d <=1; d++)
-            {
-                int newDirection = ((i + d) % 6 + 6) % 6;
-                targetCubePosition = cubeDirections[newDirection] + OddrToCube(baseTilePosition);
-                targetOddrPosition = CubeToOddr(targetCubePosition);
-                targetTile = tilemap.GetTile<Tile>(targetOddrPosition);
-                tendril.Add(targetTile);
-
-                // Now add this tendril of three tiles to the tileTendrils list.
-                tileTendrils.Add(tendril);
-            }
-        }
-
-        return tileTendrils;
+        // If the MergeManager AttemptMerge() was successful, it should return a Vector3Int for the tile it
+        //  became (not necessarily the same as this tile's tilePosition. Since we want to wait a little bit 
+        //  before checking for merge again, we can start a coroutine to CheckForMerge of the new tile after 
+        //  some time has passed.
     }
 
 

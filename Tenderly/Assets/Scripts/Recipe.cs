@@ -5,14 +5,14 @@ using UnityEngine.Tilemaps;
 
 public class Recipe : MonoBehaviour
 {
-    public Tile result;
-    public Dictionary<Tile, int> recipeDict;
+    public string recipeName;
+    public Dictionary<string, int> recipeDict;
     public int uniqueIngredientCount;
     public int recipeCost = 0;
 
-    public Recipe(Tile r, Dictionary<Tile, int> rD)
+    public Recipe(string rN, Dictionary<string, int> rD)
     {
-        result = r;
+        recipeName = rN;
         recipeDict = rD;
         uniqueIngredientCount = recipeDict.Count;
 
@@ -20,7 +20,9 @@ public class Recipe : MonoBehaviour
 
     }
 
-    public Tile RecipeDictEquality(Dictionary<Tile, int> potentialRecipe)
+    // Given a dictionary with Tile.name, ingredientCount key value pairs, return the name of the recipe if
+    //  the recipe matches, or else null.
+    public string RecipeDictEquality(Dictionary<string, int> potentialRecipe)
     {
         // Are the costs the same?
         if (recipeCost != RecipeCostCalculator(potentialRecipe))
@@ -35,7 +37,7 @@ public class Recipe : MonoBehaviour
         }
 
         // For each Key Value pair, are the keys the same?
-        foreach (KeyValuePair<Tile, int> ingredient in potentialRecipe)
+        foreach (KeyValuePair<string, int> ingredient in potentialRecipe)
         {
             // For this ingredient, does its Key exist in our recipeDict?
             if (recipeDict.ContainsKey(ingredient.Key))
@@ -53,18 +55,18 @@ public class Recipe : MonoBehaviour
             }
         }
 
-        // Otherwise, the potentalRecipe matches this recipe, so return its reslting tile.
-        return result;
+        // Otherwise, the potentalRecipe matches this recipe, so return its reslting tile.name.
+        return recipeName;
     }
 
 
-    // RecipeCost: Given a dictionary of tiles and their costs, what is the total recipeCost?
-    public int RecipeCostCalculator(Dictionary<Tile, int> rD)
+    // RecipeCost: Given a dictionary of tile.names and their costs, what is the total recipeCost?
+    public int RecipeCostCalculator(Dictionary<string, int> rD)
     {
         int rC = 0;
 
         // For every ingredient, we add its amount to the total rC.
-        foreach (KeyValuePair<Tile, int> ingredient in rD)
+        foreach (KeyValuePair<string, int> ingredient in rD)
         {
             rC += ingredient.Value;
         }
