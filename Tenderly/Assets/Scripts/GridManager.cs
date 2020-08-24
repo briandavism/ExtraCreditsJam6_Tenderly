@@ -418,6 +418,12 @@ public class GridManager : MonoBehaviour
 
         // Now that we have every valid recipe, we just need to pick one from among them and complete the merge.
         // TODO: Choose a List<Tile> of three tiles from among completedRecipes by some method.
+
+        for (int i = 0; i < completedRecipes.Count; i++)
+
+        {
+
+        }
         // TODO: Choose one of the tiles in the triple to upgrade. ClearPlants() on the other two and
         //  plantTiles.SetTile() this tile into the desired upgrade.
     }
