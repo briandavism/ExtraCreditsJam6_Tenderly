@@ -8,7 +8,7 @@ public class PlantTiles : MonoBehaviour
 {
 
     public List<Tile> plantList;
-    public Dictionary<string, Tile> plantDictionary;
+    public Dictionary<string, Tile> plantDictionary = new Dictionary<string, Tile>();
 
     void Start()
     {

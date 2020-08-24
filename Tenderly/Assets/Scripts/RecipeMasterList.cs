@@ -11,7 +11,6 @@ public class RecipeMasterList : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        //
         // recipeMasterList.Add()
 
 

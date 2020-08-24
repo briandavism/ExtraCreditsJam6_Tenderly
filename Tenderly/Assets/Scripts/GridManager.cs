@@ -195,8 +195,6 @@ public class GridManager : MonoBehaviour
                             // Spawn something from the soil plant list.
                             foreach (Tile tile in spawnOptions)
                             {
-                                // dbug
-                                Debug.Log("Soil options are: " + tile.name);
                                 if ((Random.Range(0f, 1f)) < 0.05f)
                                 {
                                     plantTiles.SetTile(tilePosition, tile);
