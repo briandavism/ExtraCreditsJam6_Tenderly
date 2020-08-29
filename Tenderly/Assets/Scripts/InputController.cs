@@ -84,6 +84,7 @@ public class InputController : MonoBehaviour
                 if (activeTool == "shovel")
                 {
                     // TODO: Remove water if water is shoveled.
+                    //  Possibly check for unsuccessful plant removal first, then move to digging up water?
                     grid.GetComponent<GridManager>().ClearPlants(cellPos);
                 }
                 else
@@ -91,8 +92,11 @@ public class InputController : MonoBehaviour
                     // If waterInventory is > 0, then you can place water.
                     if (waterInventory > 0)
                     {
-                        grid.GetComponent<GridManager>().PlaceWater(cellPos);
-                        waterInventory--;
+                        // Only places water and subtracts invntory if succesful.
+                        if (grid.GetComponent<GridManager>().PlaceWater(cellPos))
+                        {
+                            waterInventory--;
+                        }
                     }
                 }
             }
