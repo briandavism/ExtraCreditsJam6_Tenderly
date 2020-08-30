@@ -15,7 +15,6 @@ public class PlantTilePalette : MonoBehaviour
 
     private void Start()
     {
-
         plantTilePalette = new Tile[4][];
         plantTilePalette[0] = plantsOnWater.plantsOnWater;
         plantTilePalette[1] = plantsOnMarsh.plantsOnMarsh;
