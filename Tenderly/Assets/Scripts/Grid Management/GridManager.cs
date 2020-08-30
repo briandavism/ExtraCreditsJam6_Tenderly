@@ -28,7 +28,7 @@ public class GridManager : MonoBehaviour
 
     private void Awake()
     {
-        groundTileArray = groundTilePalette.groundTileArray;
+        groundTileArray = groundTilePalette.groundTilePallete;
     }
 
     // Start is called before the first frame update
@@ -132,32 +132,10 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    /* Spawning:
-     *  - What can spawn?
-     *      - Tier 1 (most often) and Tier 2 (less often).
-     * Tier 0: 
-     *  - Barren:
-     *      - Dead Plants
-     *  - Soil:
-     *      - Dead Plants
-     *  - Marsh:
-     *      - Dead Plants
-     *  - Water:
-     *      - Dead Plants
-     * Tier 1:
-     *  - Barren:
-     *      - (Nothing)
-     *  - Soil:
-     *      - Grass
-     *  - Marsh:
-     *      - Soft Rush
-     *  - Water:
-     *      - Lilypad
-     */
+    // Spawning:
     // Spawn New Plants:
     IEnumerator SpawnPlants()
     {
-        // DEBUGS ONLY: SET TO TRUE WHEN DONE
         while (true)
         {
             // Spawn plants on some tiles within spawnRadius originating from the mouse.
@@ -289,11 +267,9 @@ public class GridManager : MonoBehaviour
      */
     public void ClearPlants(Vector3Int tilePosition)
     {
-        //DEBUG RETURN
-        return;
         Tile grountUnderPlant = groundTiles.GetTile<Tile>(tilePosition);
-        Tile tileToClear = plantTiles.GetTile<Tile>(tilePosition);
-        if (tileToClear != null && grountUnderPlant != null)
+        Tile plantToClear = plantTiles.GetTile<Tile>(tilePosition);
+        if (plantToClear != null && grountUnderPlant != null)
         {
             plantTiles.SetTile(tilePosition, plantTilePalette[grountUnderPlant][0]);
         }
