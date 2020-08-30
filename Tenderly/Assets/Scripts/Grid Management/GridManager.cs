@@ -12,9 +12,9 @@ public class GridManager : MonoBehaviour
     public Tilemap plantTiles;
     // For Plant Spawning Coroutine
     public float spawnTimer;
-    public int spawnRadius;
+    private List<Vector3Int> allTilePositions;
     public GroundTilePallete groundTilePalette;
-    private Tile[] groundTileArray;
+    private Tile[] gTP;
     public List<Tile> barrenPlants;
     public List<Tile> soilPlants;
     public List<Tile> marshPlants;
@@ -28,7 +28,15 @@ public class GridManager : MonoBehaviour
 
     private void Awake()
     {
-        groundTileArray = groundTilePalette.groundTilePallete;
+        gTP = groundTilePalette.groundTilePallete;
+        allTilePositions = new List<Vector3Int>();
+        foreach (var pos in plantTiles.cellBounds.allPositionsWithin)
+        {
+            if (plantTiles.HasTile(pos))
+            {
+                allTilePositions.Add(pos);
+            }
+        }
     }
 
     // Start is called before the first frame update
@@ -40,11 +48,11 @@ public class GridManager : MonoBehaviour
 
         // To start spawning things, call the SpawnPlants method, which will start a coroutine.
         plantTilePalette = new Dictionary<Tile, List<Tile>>();
-        plantTilePalette.Add(groundTileArray[3], barrenPlants);
-        plantTilePalette.Add(groundTileArray[2], soilPlants);
-        plantTilePalette.Add(groundTileArray[1], marshPlants);
-        plantTilePalette.Add(groundTileArray[0], waterPlants);
-        StartCoroutine(SpawnPlants());
+        plantTilePalette.Add(gTP[3], barrenPlants);
+        plantTilePalette.Add(gTP[2], soilPlants);
+        plantTilePalette.Add(gTP[1], marshPlants);
+        plantTilePalette.Add(gTP[0], waterPlants);
+        StartCoroutine(SpawnPeriodicPlants());
     }
 
     
@@ -100,7 +108,7 @@ public class GridManager : MonoBehaviour
     public bool PlaceWater(Vector3Int tileLocation)
     {
         // Only bother placing water if there isn't water already there.
-        if (groundTiles.GetTile<Tile>(tileLocation).sprite != groundTileArray[0].sprite)
+        if (groundTiles.GetTile<Tile>(tileLocation).sprite != gTP[0].sprite)
         {
             groundTileManager.PlaceWater(tileLocation);
 
@@ -120,7 +128,7 @@ public class GridManager : MonoBehaviour
     public bool RemoveWater(Vector3Int tileLocation)
     {
         // Don't bother removing water if there isn't water already there.
-        if (groundTiles.GetTile<Tile>(tileLocation).sprite == groundTileArray[0].sprite)
+        if (groundTiles.GetTile<Tile>(tileLocation).sprite == gTP[0].sprite)
         {
             groundTileManager.RemoveWater(tileLocation);
             return true;
@@ -134,15 +142,13 @@ public class GridManager : MonoBehaviour
 
     // Spawning:
     // Spawn New Plants:
-    IEnumerator SpawnPlants()
+    IEnumerator SpawnPeriodicPlants()
     {
         while (true)
         {
             // Spawn plants on some tiles within spawnRadius originating from the mouse.
-            Vector3Int spawnOrigin = GetComponentInParent<Grid>().WorldToCell(Camera.main.ScreenToWorldPoint(Input.mousePosition));
-            List<Vector3Int> tileVectors = HexMath.OddrRange(spawnOrigin, spawnRadius);
             List<Tile> tiles = new List<Tile>();
-            foreach (Vector3Int tilePosition in tileVectors)
+            foreach (Vector3Int tilePosition in allTilePositions)
             {
                 Tile groundTile = groundTiles.GetTile<Tile>(tilePosition);
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
+
 public class GroundTileManager : MonoBehaviour
 {
     public static GroundTileManager instance;
@@ -12,6 +13,10 @@ public class GroundTileManager : MonoBehaviour
     public Dictionary<Vector3, GroundTile> groundTiles;
     public GroundTilePallete groundTilePallete;
     private Tile[] groundTileArray;
+    // For tweaking speed that tiles change based on distance to water
+    public float baseChangeTime;
+    public float minGaussian;
+    public float maxGaussian;
 
     private void Awake()
     {
@@ -46,7 +51,7 @@ public class GroundTileManager : MonoBehaviour
             {
                 GridVector = pos,
                 WorldVector = tilemap.CellToWorld(pos),
-                ThisTile = tilemap.GetTile(pos),
+                ThisTile = tilemap.GetTile<Tile>(pos),
                 TilemapMember = tilemap,
                 Name = pos.x + "," + pos.y,
                 NearbyWaterTiles = nearbyWaterTiles,
@@ -145,6 +150,7 @@ public class GroundTileManager : MonoBehaviour
         tilemap.SetTile(tileLocation, groundTileArray[0]);
         // Update groundTiles dictionary.
         groundTiles[tileLocation].ThisTile = groundTileArray[0];
+        groundTiles[tileLocation].DistanceToWater = 0;
 
         // Get the neighbors.
         List<Vector3Int> neighbors = HexMath.OddrRange(tileLocation, 5);
@@ -157,7 +163,12 @@ public class GroundTileManager : MonoBehaviour
                 // We want to add this new water into the dictionary and, if DistanceToWater just shrank, update
                 // the neighbor to the appropriate tile type.
                 int dTW = HexMath.OddrDistance(tileLocation, nPosition);
-                if (groundTiles[nPosition].NearbyWaterTiles.ContainsKey(dTW))
+                if (dTW == 0)
+                {
+                    // The tile has 0 distance to water, as in, it's looking at itself, so skip this one.
+                    continue;
+                }
+                else if (groundTiles[nPosition].NearbyWaterTiles.ContainsKey(dTW))
                 {
                     // This value for dTW exists in the dictionary. Merely add this new water tile to the list.
                     groundTiles[nPosition].NearbyWaterTiles[dTW].Add(tileLocation);
@@ -171,12 +182,15 @@ public class GroundTileManager : MonoBehaviour
                 // Did the neighbor get closer to water?
                 if (dTW < groundTiles[nPosition].DistanceToWater)
                 {
-                    // Set this tile according to its distanceToWater.
-                    TileBase nTile = GetTileByWaterDistance(dTW, marshDistance, soilDistance);
-                    tilemap.SetTile(nPosition, nTile);
-                    // Remember to update groundTiles dictionary!
+                    // dTW changed, so we can update groundTiles dictionary.
                     groundTiles[nPosition].DistanceToWater = dTW;
-                    groundTiles[nPosition].ThisTile = nTile;
+
+                    // Which tile should it be, according to its distanceToWater?
+                    Tile nTile = GetTileByWaterDistance(dTW, marshDistance, soilDistance);
+
+
+                    // Start a cooroutine to change the tile.
+                    StartCoroutine(DelayedGroundTileChange(nPosition));
                 }
             }
         }
@@ -229,14 +243,88 @@ public class GroundTileManager : MonoBehaviour
                 dTW = GetDistanceToWater(nPosition, groundTiles[nPosition].NearbyWaterTiles);
                 if (dTW != groundTiles[nPosition].DistanceToWater)
                 {
-                    // Set this tile according to its distanceToWater.
-                    TileBase nTile = GetTileByWaterDistance(dTW, marshDistance, soilDistance);
-                    tilemap.SetTile(nPosition, nTile);
-                    // Remember to update groundTiles dictionary!
+                    // dTW changed, so we can update groundTiles dictionary.
                     groundTiles[nPosition].DistanceToWater = dTW;
-                    groundTiles[nPosition].ThisTile = nTile;
+                    
+                    // Which tile should it be, according to its distanceToWater?
+                    Tile nTile = GetTileByWaterDistance(dTW, marshDistance, soilDistance);
+
+                    // Start a cooroutine to change the tile.
+                    StartCoroutine(DelayedGroundTileChange(nPosition));
                 }
             }
         }
+    }
+
+    // Delayed Tile Change: Water changes tiles, but tiles further away take longer.
+    IEnumerator DelayedGroundTileChange(Vector3Int tilePos)
+    {
+        while (true)
+        {
+            // What are we?
+            Tile thisTile = groundTiles[tilePos].ThisTile;
+
+            // How far are we from water?
+            int dTW = groundTiles[tilePos].DistanceToWater;
+
+            // What should we be changing into?
+            Tile nTile = GetTileByWaterDistance(dTW, marshDistance, soilDistance);
+
+            // How long then should we wait to change?
+            float timeToWait = baseChangeTime * RandomGaussian() * Mathf.Pow(dTW, (1.0f + Mathf.Sqrt(5.0f)) / 2.0f);
+
+            // Pass the time with a gentle song...
+            yield return new WaitForSeconds(timeToWait);
+
+            // After that time has passed, did our distance to water change?
+            int newDTW = groundTiles[tilePos].DistanceToWater;
+
+            // Also, is it still appropriate to change into the tile we set out to become?
+            Tile newNTile = GetTileByWaterDistance(newDTW, marshDistance, soilDistance);
+
+            // If distanceToWater changed, there was a shift in water tile locations while we waited. We assume
+            //  that groundTiles dictionary has the correct distanceToWater.
+            if (dTW == newDTW)
+            {
+                // There was no change in distance while we waited. 
+                tilemap.SetTile(tilePos, newNTile);
+
+                // Remember to update groundTiles dictionary!
+                groundTiles[tilePos].ThisTile = nTile;
+
+                // Break from the while loop.
+                break;
+            }
+            else
+            {
+                // There was a shift in distance to water while we waited. We may want to repeat this loop.
+            }
+        }
+    }
+
+
+    // For finding a normal distribution value.
+    // Code borrowed from: https://answers.unity.com/questions/421968/normal-distribution-random.html
+    public float RandomGaussian()
+    {
+        float minValue = minGaussian;
+        float maxValue = maxGaussian;
+
+        float u, v, S;
+
+        do
+        {
+            u = 2.0f * Random.value - 1.0f;
+            v = 2.0f * Random.value - 1.0f;
+            S = u * u + v * v;
+        }
+        while (S >= 1.0f);
+
+        float std = u * Mathf.Sqrt(-2.0f * Mathf.Log(S) / S);
+
+        float mean = (minValue + maxValue) / 2.0f;
+        float sigma = (maxValue - mean) / 5.0f;
+
+        return Mathf.Clamp(std * sigma + mean, minValue, maxValue);
     }
 }

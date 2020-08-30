@@ -8,7 +8,7 @@ public class GroundTile
 {
     public Vector3Int GridVector { get; set; }
     public Vector3 WorldVector { get; set; }
-    public TileBase ThisTile { get; set; }
+    public Tile ThisTile { get; set; }
     public Tilemap TilemapMember { get; set; }
     public string Name { get; set; }
 
