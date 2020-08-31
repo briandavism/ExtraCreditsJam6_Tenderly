@@ -15,8 +15,6 @@ public class GroundTileManager : MonoBehaviour
     private Tile[] groundTileArray;
     // For tweaking speed that tiles change based on distance to water
     public float baseChangeTime;
-    public float minGaussian;
-    public float maxGaussian;
 
     private void Awake()
     {
@@ -271,7 +269,7 @@ public class GroundTileManager : MonoBehaviour
             Tile nTile = GetTileByWaterDistance(dTW, marshDistance, soilDistance);
             
             // How long then should we wait to change?
-            float timeToWait = baseChangeTime * RandomNumberFunctions.RandomGaussian() * Mathf.Pow(dTW, (1.0f + Mathf.Sqrt(5.0f)) / 2.0f);
+            float timeToWait = baseChangeTime * RandomNumberFunctions.RandomGaussian() * Mathf.Pow((1.0f + Mathf.Sqrt(5.0f)) / 2.0f, dTW);
             
             // Pass the time with a gentle song...
             yield return new WaitForSeconds(timeToWait);
