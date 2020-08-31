@@ -1,0 +1,16 @@
+id,Name,Score,BarrenDrop,SoilDrop,MarshDrop,WaterDrop,Ingredient1,Count1,Ingredient2,Count2
+0,DeadPlant,1,1,2,2,,,,,
+1,Fiddlehead,2,,5,,,,,,
+2,Grass,2,,4,3,,,,,
+3,SoftRush,2,,,5,,,,,
+4,Algae,2,,,3,3,,,,
+5,Lilypad,2,,,,4,,,,
+6,Bracken,3,,1,,,Fiddlehead,2,Grass,1
+7,Bullrush,3,,,1,,SoftRush,2,Grass,1
+8,Waterlily,3,,,,1,Lilypad,2,Algae,1
+9,CallaLily,4,,,,,Waterlily,1,BullRush,2
+10,Mustard,4,,,,,Grass,2,Bracken,1
+11,Shrub,4,,,,,Bracken,3,,
+12,CorpseFlower,5,,,,,CallaLily,2,Waterlily,1
+13,Fireweed,5,,,,,Mustard,2,Bracken,1
+14,Sumac,5,,,,,Shrub,2,CallaLily,1
