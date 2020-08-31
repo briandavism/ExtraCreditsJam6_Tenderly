@@ -25,7 +25,6 @@ public class Debugger : MonoBehaviour
         Tilemap testTilemap = FindObjectOfType<Grid>().GetComponentInChildren<Tilemap>();
         //Debug.Log(testTilemap.ToString());
         // Can we tell the tilemap to spawn a tile?
-        
 
         /* // Does neighbor range still work? // Status: it does
         List<Vector3Int> tilesInRange = HexMath.OddrRange(origin, 3);

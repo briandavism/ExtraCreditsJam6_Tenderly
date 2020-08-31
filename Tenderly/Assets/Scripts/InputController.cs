@@ -29,6 +29,8 @@ public class InputController : MonoBehaviour
     public Image BucketGlow;
     public Image ShovelGlow;
     public static bool disableTool = false;
+    public RectTransform toolContainer;
+    public RectTransform canvasRT;
 
     // Water Placement
     public static int waterInventory = 99;
@@ -52,12 +54,12 @@ public class InputController : MonoBehaviour
         //Update Water Inventory Text
         waterText.text = waterInventory.ToString();
 
-        if(activeTool == "shovel")
+        if(activeTool.Equals("shovel", System.StringComparison.Ordinal))
         {
             BucketGlow.color = new Color (1, 1, 1, 0);
             ShovelGlow.color = new Color(1, 1, 1, 1);
         }
-        else
+        else if (activeTool.Equals("bucket", System.StringComparison.Ordinal))
         {
             BucketGlow.color = new Color(1, 1, 1, 1);
             ShovelGlow.color = new Color(1, 1, 1, 0);
@@ -65,9 +67,6 @@ public class InputController : MonoBehaviour
     }
     void LateUpdate()
     {
-        
-
-        
         /************** Input Handler logic for various user inputs. **************/
         // Useful parameters:
         // The Vector3Int corresponding to the mouse position over the grid.
@@ -78,30 +77,8 @@ public class InputController : MonoBehaviour
         //Left click to use tool
         if (Input.GetMouseButtonDown(0))
         {
-            // If mouse position is over the tool buttons, don't use a tool!
-            if (!disableTool)
-            {
-                if (activeTool == "shovel")
-                {
-                    // TODO: Remove water if water is shoveled?
-                    //  Possibly check for unsuccessful plant removal first, then move to digging up water?
-
-                    grid.GetComponent<GridManager>().ClearPlants(cellPos);
-                }
-                else
-                {
-                    // If waterInventory is > 0, then you can place water.
-                    if (waterInventory > 0)
-                    {
-                        // Only places water and subtracts invntory if succesful.
-                        if (grid.GetComponent<GridManager>().PlaceWater(cellPos))
-                        {
-                            waterInventory--;
-                        }
-                    }
-                }
-            }
-
+            // Call UseTool
+            UseTool(cellPos);
         }
 
         // On middle mouse click, prepare to drag.
@@ -171,26 +148,57 @@ public class InputController : MonoBehaviour
             // Update hoverText if needed.
             if (updateHoverText)
             {
-                hoverText.text = hoverGroundString + ":" + hoverPlantString;
+                hoverText.text = string.Join(": ", hoverGroundString, hoverPlantString);
             }
 
             // Update Water Text
 
         }
+    }
 
-        // Water Placement: Place Water in the tile under the mouse.
-        if (Input.GetKeyDown("space") && waterInventory > 0)
+    public void UseTool(Vector3Int cellPos)
+    {
+        // If mouse position is over the tool buttons, don't use a tool!
+        if (MouseWithinToolContainer() || disableTool)
         {
-            grid.GetComponent<GridManager>().PlaceWater(cellPos);
-            waterInventory = waterInventory - 1;
-            waterText.text = waterInventory.ToString();
+            return;
         }
 
-        // Clear Tile: Clears off plants in the tile, if there are any.
-        if (Input.GetKeyDown("backspace"))
+        if (activeTool.Equals("shovel", System.StringComparison.Ordinal))
         {
             grid.GetComponent<GridManager>().ClearPlants(cellPos);
         }
+        else if (activeTool.Equals("bucket", System.StringComparison.Ordinal))
+        {
+            // If waterInventory is > 0, then you can place water.
+            if (waterInventory > 0)
+            {
+                // Only places water and subtracts invntory if succesful.
+                if (grid.GetComponent<GridManager>().PlaceWater(cellPos))
+                {
+                    waterInventory--;
+                }
+            }
+        }
+    }
 
+    public bool MouseWithinToolContainer()
+    {
+        bool result = false;
+
+        // Get mouse position in the world.
+        Vector3 mousePosInWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+
+        // Get toolContainer corners
+        Vector3[] corners = new Vector3[4];
+        toolContainer.GetWorldCorners(corners);
+        Vector3 topLeft = corners[0];
+
+        // Scale the toolContainer Rect Transform to the canvas.
+        Vector2 scale = canvasRT.localScale;
+        Vector2 scaledSize = new Vector2(scale.x * toolContainer.rect.size.x, scale.y * toolContainer.rect.size.y);
+        Rect scaledToolContainer = new Rect(topLeft, scaledSize);
+
+        return scaledToolContainer.Contains(mousePosInWorld);
     }
 }
