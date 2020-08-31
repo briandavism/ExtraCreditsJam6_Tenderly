@@ -12,6 +12,7 @@ public class InputController : MonoBehaviour
     private Vector3 cameraOrigin;
     private Vector3 cameraDiff;
     private bool mouseDrag = false;
+    private Vector3 clickStartPos;
     // Camera Zoom
     public float cameraZoom = 16;
     Vector3 cameraNewPosition;
@@ -75,37 +76,15 @@ public class InputController : MonoBehaviour
         // The tiles, ground and plant, that may be on the grid under the mouse.
         List<Tile> tiles = grid.GetComponent<GridManager>().GetTiles(cellPos);
 
-        //Left click to use tool
-        if (Input.GetMouseButtonDown(0))
+        // On left mouse button down log the start position
+        if(Input.GetMouseButtonDown(0))
         {
-            // If mouse position is over the tool buttons, don't use a tool!
-            if (!disableTool)
-            {
-                if (activeTool == "shovel")
-                {
-                    // TODO: Remove water if water is shoveled?
-                    //  Possibly check for unsuccessful plant removal first, then move to digging up water?
-
-                    grid.GetComponent<GridManager>().ClearPlants(cellPos);
-                }
-                else
-                {
-                    // If waterInventory is > 0, then you can place water.
-                    if (waterInventory > 0)
-                    {
-                        // Only places water and subtracts invntory if succesful.
-                        if (grid.GetComponent<GridManager>().PlaceWater(cellPos))
-                        {
-                            waterInventory--;
-                        }
-                    }
-                }
-            }
-
+            clickStartPos = Input.mousePosition;
+            //Debug.Log("startPos=" + clickStartPos);
         }
-
-        // On middle mouse click, prepare to drag.
-        if (Input.GetMouseButton(2))
+        
+        // On left mouse click, prepare to drag.
+        if (Input.GetMouseButton(0))
         {
             cameraDiff = (Camera.main.ScreenToWorldPoint(Input.mousePosition)) - Camera.main.transform.position;
             if (mouseDrag == false)
@@ -122,6 +101,37 @@ public class InputController : MonoBehaviour
         {
             Camera.main.transform.position = cameraOrigin - cameraDiff;
         }
+
+        //Left click to use tool
+        if (Input.GetMouseButtonUp(0))
+        {
+            // If mouse position is over the tool buttons, don't use a tool!
+            if (!disableTool)
+            {
+                if (activeTool == "shovel" && clickStartPos == Input.mousePosition)
+                {
+                    // TODO: Remove water if water is shoveled?
+                    //  Possibly check for unsuccessful plant removal first, then move to digging up water?
+
+                    grid.GetComponent<GridManager>().ClearPlants(cellPos);
+                }
+                else
+                {
+                    // If waterInventory is > 0, then you can place water.
+                    if (waterInventory > 0 && clickStartPos == Input.mousePosition)
+                    {
+                        // Only places water and subtracts invntory if succesful.
+                        if (grid.GetComponent<GridManager>().PlaceWater(cellPos))
+                        {
+                            waterInventory--;
+                        }
+                    }
+                }
+            }
+
+        }
+
+        
 
         // On right click, reset camera to ResetCamera position.
         if (Input.GetMouseButton(1))
