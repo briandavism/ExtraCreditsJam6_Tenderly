@@ -6,17 +6,17 @@ using UnityEngine.Tilemaps;
 public class PlantsOnSoil : MonoBehaviour
 {
 
-    public Tile[] plantsOnSoil;
-    public int[] plantsOnSoilSpawnChances;
+    public List<Tile> plantsOnSoil;
+    public Dictionary<string, int> plantsOnSoilSpawnChances;
     public int totalSpawnChance;
 
     private void Awake()
     {
         // Calculate totalSpawnCost
         totalSpawnChance = 0;
-        foreach (int spawnChance in plantsOnSoilSpawnChances)
+        foreach (KeyValuePair<string, int> kvp in plantsOnSoilSpawnChances)
         {
-            totalSpawnChance += spawnChance;
+            totalSpawnChance += kvp.Value;
         }
     }
 }

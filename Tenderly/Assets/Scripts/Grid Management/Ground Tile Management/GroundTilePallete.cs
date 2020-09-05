@@ -8,4 +8,6 @@ public class GroundTilePallete : MonoBehaviour
 
     public Tile[] groundTilePallete;
 
+    // Key: groundtile.name - 
+
 }

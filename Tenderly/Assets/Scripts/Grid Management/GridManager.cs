@@ -15,11 +15,13 @@ public class GridManager : MonoBehaviour
     private List<Vector3Int> allTilePositions;
     public GroundTilePallete groundTilePalette;
     private Tile[] gTP;
+    public PlantTilePalette plantTilePalette;
+
     public List<Tile> barrenPlants;
     public List<Tile> soilPlants;
     public List<Tile> marshPlants;
     public List<Tile> waterPlants;
-    public Dictionary<Tile, List<Tile>> plantTilePalette;
+    public Dictionary<Tile, List<Tile>> plantTileDictionary;
     // For Plant Merging
     public float mergeDelay = 5.0f;
     public float spawnChance = 0.005f;
@@ -47,11 +49,11 @@ public class GridManager : MonoBehaviour
         Dbug();
 
         // To start spawning things, call the SpawnPlants method, which will start a coroutine.
-        plantTilePalette = new Dictionary<Tile, List<Tile>>();
-        plantTilePalette.Add(gTP[3], barrenPlants);
-        plantTilePalette.Add(gTP[2], soilPlants);
-        plantTilePalette.Add(gTP[1], marshPlants);
-        plantTilePalette.Add(gTP[0], waterPlants);
+        plantTileDictionary = new Dictionary<Tile, List<Tile>>();
+        plantTileDictionary.Add(gTP[3], barrenPlants);
+        plantTileDictionary.Add(gTP[2], soilPlants);
+        plantTileDictionary.Add(gTP[1], marshPlants);
+        plantTileDictionary.Add(gTP[0], waterPlants);
         StartCoroutine(SpawnPeriodicPlants());
     }
 
@@ -158,7 +160,7 @@ public class GridManager : MonoBehaviour
                 // If there is a ground tile and the tile has no plants...
                 if (groundTile != null && (plantTile is null || plantTile.name == "Empty"))
                 {
-                    List<Tile> spawnOptions = plantTilePalette[groundTile];
+                    List<Tile> spawnOptions = plantTileDictionary[groundTile];
                     float tempSpawnChance = spawnChance;
                     switch (groundTile.name)
                     {
@@ -277,7 +279,7 @@ public class GridManager : MonoBehaviour
         Tile plantToClear = plantTiles.GetTile<Tile>(tilePosition);
         if (plantToClear != null && grountUnderPlant != null)
         {
-            plantTiles.SetTile(tilePosition, plantTilePalette[grountUnderPlant][0]);
+            plantTiles.SetTile(tilePosition, plantTileDictionary[grountUnderPlant][0]);
         }
     }
 

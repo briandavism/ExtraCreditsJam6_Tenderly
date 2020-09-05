@@ -10,7 +10,7 @@ public class GroundTileManager : MonoBehaviour
     public Tilemap tilemap;
     public int marshDistance = 2;
     public int soilDistance = 5;
-    public Dictionary<Vector3, GroundTile> groundTiles;
+    public Dictionary<Vector3Int, GroundTile> groundTiles;
     public GroundTilePallete groundTilePallete;
     private Tile[] groundTileArray;
     // For tweaking speed that tiles change based on distance to water
@@ -34,7 +34,7 @@ public class GroundTileManager : MonoBehaviour
     // Use this for initialization
     private void GetGroundTiles()
     {
-        groundTiles = new Dictionary<Vector3, GroundTile>();
+        groundTiles = new Dictionary<Vector3Int, GroundTile>();
         foreach (Vector3Int pos in tilemap.cellBounds.allPositionsWithin)
         {
             if (!tilemap.HasTile(pos)) continue;
@@ -286,7 +286,8 @@ public class GroundTileManager : MonoBehaviour
             {
                 // There was no change in distance while we waited. 
                 // The last thing we want to do is make sure not to directly from barren to marsh or marsh to barren.
-                if ((newNTile.name == "Barren" && thisTile.name == "Marsh")||( newNTile.name == "Marsh" && thisTile.name == "Barren"))
+                if (newNTile.name.Equals("Barren", System.StringComparison.Ordinal) && thisTile.name.Equals("Marsh", System.StringComparison.Ordinal) ||
+                    newNTile.name.Equals("Marsh", System.StringComparison.Ordinal) && thisTile.name.Equals("Barren", System.StringComparison.Ordinal))
                 {
                     // Go to the intermediary Soil tile instead and loop around again.
                     tilemap.SetTile(tilePos, groundTileArray[2]);

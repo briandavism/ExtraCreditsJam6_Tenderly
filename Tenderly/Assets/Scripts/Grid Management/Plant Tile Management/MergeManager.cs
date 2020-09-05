@@ -15,7 +15,7 @@ public class MergeManager : MonoBehaviour
         Vector3Int chosenTileLocation = new Vector3Int();
         Debug.Log("DBug Location: " + chosenTileLocation);
         return chosenTileLocation;
-
+        /*
         // What type of tile am I?
         string tileName = plantTiles.GetTile<Tile>(tilePosition).name;
 
@@ -82,6 +82,7 @@ public class MergeManager : MonoBehaviour
         }
         Debug.Log("There.");
         return chosenTileLocation;
+        */
     }
 
 
