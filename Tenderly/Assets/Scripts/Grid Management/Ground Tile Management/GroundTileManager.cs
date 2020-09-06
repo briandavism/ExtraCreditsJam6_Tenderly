@@ -6,13 +6,15 @@ using UnityEngine.Tilemaps;
 
 public class GroundTileManager : MonoBehaviour
 {
+    public GameObject gameData;
     public static GroundTileManager instance;
+    private PlantTileManager plantTileManager;
     public Tilemap tilemap;
+    private List<Vector3Int> allTilePositions;
     public int marshDistance = 2;
     public int soilDistance = 5;
-    public Dictionary<Vector3Int, GroundTile> groundTiles;
-    public GroundTilePallete groundTilePallete;
-    private Tile[] groundTileArray;
+    public Dictionary<Vector3Int, GroundTile> groundTiles = new Dictionary<Vector3Int, GroundTile>();
+    public Dictionary<string, Tile> groundTileFromName = new Dictionary<string, Tile>();
     // For tweaking speed that tiles change based on distance to water
     public float baseChangeTime;
 
@@ -26,16 +28,22 @@ public class GroundTileManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+    }
 
-        groundTileArray = groundTilePallete.groundTilePallete;
+
+    private void Start()
+    {
+        plantTileManager = gameObject.GetComponent<GridManager>().plantTileManager;
+        groundTileFromName = gameData.GetComponent<LoadGameData>().groundTileFromName;
+        allTilePositions = gameObject.GetComponent<GridManager>().allTilePositions;
         GetGroundTiles();
     }
+
 
     // Use this for initialization
     private void GetGroundTiles()
     {
-        groundTiles = new Dictionary<Vector3Int, GroundTile>();
-        foreach (Vector3Int pos in tilemap.cellBounds.allPositionsWithin)
+        foreach (Vector3Int pos in allTilePositions)
         {
             if (!tilemap.HasTile(pos)) continue;
 
@@ -45,26 +53,23 @@ public class GroundTileManager : MonoBehaviour
             Tile thisTile = GetTileByWaterDistance(distanceToWater, marshDistance, soilDistance);
             tilemap.SetTile(pos, thisTile);
 
-            var tile = new GroundTile
-            {
-                GridVector = pos,
-                WorldVector = tilemap.CellToWorld(pos),
-                ThisTile = tilemap.GetTile<Tile>(pos),
-                TilemapMember = tilemap,
-                Name = pos.x + "," + pos.y,
-                NearbyWaterTiles = nearbyWaterTiles,
-                DistanceToWater = distanceToWater,
-                MarshDistance = marshDistance,
-                SoilDistance = soilDistance
-            };
+            var tile = ScriptableObject.CreateInstance<GroundTile>();
+            tile.GridVector = pos;
+            tile.WorldVector = tilemap.CellToWorld(pos);
+            tile.ThisTile = tilemap.GetTile<Tile>(pos);
+            tile.TilemapMember = tilemap;
+            tile.Name = pos.x + "," + pos.y;
+            tile.NearbyWaterTiles = nearbyWaterTiles;
+            tile.DistanceToWater = distanceToWater;
+            tile.MarshDistance = marshDistance;
+            tile.SoilDistance = soilDistance;
 
             groundTiles.Add(tile.GridVector, tile);
         }
     }
 
 
-    public Dictionary<int, List<Vector3Int>> GetNearbyWaterTiles(Vector3Int tilePos, Tilemap tilemap, 
-                                                                int soilDistance)
+    public Dictionary<int, List<Vector3Int>> GetNearbyWaterTiles(Vector3Int tilePos, Tilemap tilemap, int soilDistance)
     {
         Dictionary<int, List<Vector3Int>> result = new Dictionary<int, List<Vector3Int>>();
 
@@ -76,8 +81,9 @@ public class GroundTileManager : MonoBehaviour
         {
             // Is there even a tile here?
             if (!tilemap.HasTile(nPos)) continue;
-            // Is this tile water based off its sprite?
-            if (tilemap.GetTile<Tile>(nPos).sprite == groundTileArray[0].sprite)
+
+            // Is this tile water?
+            if (tilemap.GetTile<Tile>(nPos).name.Equals("Water", System.StringComparison.Ordinal))
             {
                 // Get the distance from this tile to the water tile.
                 int distanceToWater = HexMath.OddrDistance(tilePos, nPos);
@@ -121,22 +127,24 @@ public class GroundTileManager : MonoBehaviour
         if (distanceToWater == 0)
         {
             // The tile should be Water.
-            return groundTileArray[0];
+            return groundTileFromName["Water"];
         }
         else if (distanceToWater > 0 && distanceToWater <= marshDistance)
         {
             // The tile should be Marsh.
-            return groundTileArray[1];
+            return groundTileFromName["Marsh"];
+
         }
         else if (distanceToWater > marshDistance && distanceToWater <= soilDistance)
         {
             // The tile should be Soil.
-            return groundTileArray[2];
+            return groundTileFromName["Soil"];
+
         }
         else
         {
             // Tile should be Barren otherwise.
-            return groundTileArray[3];
+            return groundTileFromName["Barren"];
         }
     }
 
@@ -145,9 +153,10 @@ public class GroundTileManager : MonoBehaviour
     public void PlaceWater(Vector3Int tileLocation)
     {
         // Set the target tile to be a water tile.
-        tilemap.SetTile(tileLocation, groundTileArray[0]);
+        tilemap.SetTile(tileLocation, groundTileFromName["Water"]);
+
         // Update groundTiles dictionary.
-        groundTiles[tileLocation].ThisTile = groundTileArray[0];
+        groundTiles[tileLocation].ThisTile = groundTileFromName["Water"];
         groundTiles[tileLocation].DistanceToWater = 0;
 
         // Get the neighbors.
@@ -186,12 +195,14 @@ public class GroundTileManager : MonoBehaviour
                     // Which tile should it be, according to its distanceToWater?
                     Tile nTile = GetTileByWaterDistance(dTW, marshDistance, soilDistance);
 
-
                     // Start a cooroutine to change the tile.
                     StartCoroutine(DelayedGroundTileChange(nPosition));
                 }
             }
         }
+
+        // Last but not least, clear any plant on that tile?
+        plantTileManager.ClearPlants(tileLocation);
     }
     
     
@@ -199,9 +210,9 @@ public class GroundTileManager : MonoBehaviour
     public void RemoveWater(Vector3Int tileLocation)
     {
         // Set the target tile to be a marsh tile. (OR WHATEVER REMOVED WATER TURNS INTO)
-        tilemap.SetTile(tileLocation, groundTileArray[1]);
+        tilemap.SetTile(tileLocation, groundTileFromName["Marsh"]);
         // Update groundTiles dictionary.
-        groundTiles[tileLocation].ThisTile = groundTileArray[1];
+        groundTiles[tileLocation].ThisTile = groundTileFromName["Marsh"];
 
         // Get the neighbors.
         List<Vector3Int> neighbors = HexMath.OddrRange(tileLocation, 5);
@@ -244,9 +255,6 @@ public class GroundTileManager : MonoBehaviour
                     // dTW changed, so we can update groundTiles dictionary.
                     groundTiles[nPosition].DistanceToWater = dTW;
                     
-                    // Which tile should it be, according to its distanceToWater?
-                    Tile nTile = GetTileByWaterDistance(dTW, marshDistance, soilDistance);
-
                     // Start a cooroutine to change the tile.
                     StartCoroutine(DelayedGroundTileChange(nPosition));
                 }
@@ -286,11 +294,12 @@ public class GroundTileManager : MonoBehaviour
             {
                 // There was no change in distance while we waited. 
                 // The last thing we want to do is make sure not to directly from barren to marsh or marsh to barren.
-                if (newNTile.name.Equals("Barren", System.StringComparison.Ordinal) && thisTile.name.Equals("Marsh", System.StringComparison.Ordinal) ||
-                    newNTile.name.Equals("Marsh", System.StringComparison.Ordinal) && thisTile.name.Equals("Barren", System.StringComparison.Ordinal))
+                if ((newNTile.name.Equals("Barren", System.StringComparison.Ordinal) && thisTile.name.Equals("Marsh", System.StringComparison.Ordinal)) ||
+                    (newNTile.name.Equals("Marsh", System.StringComparison.Ordinal) && thisTile.name.Equals("Barren", System.StringComparison.Ordinal)))
                 {
                     // Go to the intermediary Soil tile instead and loop around again.
-                    tilemap.SetTile(tilePos, groundTileArray[2]);
+                    tilemap.SetTile(tilePos, groundTileFromName["Soil"]);
+
                     // Remember to update groundTiles dictionary!
                     groundTiles[tilePos].ThisTile = nTile;
                 }
@@ -300,7 +309,7 @@ public class GroundTileManager : MonoBehaviour
                     tilemap.SetTile(tilePos, newNTile);
 
                     // Remember to update groundTiles dictionary!
-                    groundTiles[tilePos].ThisTile = nTile;
+                    groundTiles[tilePos].ThisTile = newNTile;
 
                     // Break from the while loop.
                     break;
