@@ -35,7 +35,9 @@ public class InputController : MonoBehaviour
 
     // Water Placement
     public static int waterInventory = 99;
+    private int waterSpent = 0;
     public Text waterText;
+    private int startingWater = 4;
 
     void Start()
     {
@@ -53,6 +55,7 @@ public class InputController : MonoBehaviour
     void Update()
     {
         //Update Water Inventory Text
+        waterInventory = startingWater + ProgressBar.waterEarned - waterSpent;
         waterText.text = waterInventory.ToString();
 
         if(activeTool.Equals("shovel", System.StringComparison.Ordinal))
@@ -186,7 +189,8 @@ public class InputController : MonoBehaviour
                 // Only places water and subtracts invntory if succesful.
                 if (grid.GetComponent<GridManager>().PlaceWater(cellPos))
                 {
-                    waterInventory--;
+                    //waterInventory--;
+                    waterSpent++;
                 }
             }
         }        
