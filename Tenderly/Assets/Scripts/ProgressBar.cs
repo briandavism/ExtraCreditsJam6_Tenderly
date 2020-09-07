@@ -14,6 +14,7 @@ public class ProgressBar : MonoBehaviour
     private int waterXpReq;
     private int spentWaterXp;
     private int NewWaterXP;
+    private int pointsRemaining;
 
     private int waterXpBase = 100;
     private float waterXpExponent = 1.33f;
@@ -53,7 +54,8 @@ public class ProgressBar : MonoBehaviour
     void Update()
     {
         NewWaterXP = Mathf.Max(Score.scoreCount - spentWaterXp,0);
-        displayText.text = NewWaterXP.ToString() + "/" + waterXpReq;
+        pointsRemaining = waterXpReq - NewWaterXP;
+        displayText.text = "  Next water in " + pointsRemaining.ToString() + " pts";
         slider.value = (float)NewWaterXP / (float)waterXpReq;
         if(NewWaterXP >= waterXpReq)
         {

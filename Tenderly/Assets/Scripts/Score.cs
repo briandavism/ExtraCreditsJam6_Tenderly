@@ -25,6 +25,6 @@ public class Score : MonoBehaviour
             timeCount = 0.0;
             scoreCount++;
         }
-        score.text = scoreCount.ToString();
+        score.text = "Score: " + scoreCount.ToString();
     }
 }
