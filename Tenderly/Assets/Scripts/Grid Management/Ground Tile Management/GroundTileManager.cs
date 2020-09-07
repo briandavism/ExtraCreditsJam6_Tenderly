@@ -15,6 +15,8 @@ public class GroundTileManager : MonoBehaviour
     public int soilDistance = 5;
     public Dictionary<Vector3Int, GroundTile> groundTiles = new Dictionary<Vector3Int, GroundTile>();
     public Dictionary<string, Tile> groundTileFromName = new Dictionary<string, Tile>();
+    public Dictionary<string, Terrain> terrainFromName = new Dictionary<string, Terrain>();
+
     // For tweaking speed that tiles change based on distance to water
     public float baseChangeTime;
 
@@ -35,6 +37,7 @@ public class GroundTileManager : MonoBehaviour
     {
         plantTileManager = gameObject.GetComponent<GridManager>().plantTileManager;
         groundTileFromName = gameData.GetComponent<LoadGameData>().groundTileFromName;
+        terrainFromName = gameData.GetComponent<LoadGameData>().terrainFromName;
         allTilePositions = gameObject.GetComponent<GridManager>().allTilePositions;
         GetGroundTiles();
     }
@@ -63,6 +66,7 @@ public class GroundTileManager : MonoBehaviour
             tile.DistanceToWater = distanceToWater;
             tile.MarshDistance = marshDistance;
             tile.SoilDistance = soilDistance;
+            tile.Terrain = terrainFromName[thisTile.name];
 
             groundTiles.Add(tile.GridVector, tile);
         }
@@ -302,6 +306,8 @@ public class GroundTileManager : MonoBehaviour
 
                     // Remember to update groundTiles dictionary!
                     groundTiles[tilePos].ThisTile = nTile;
+                    groundTiles[tilePos].Terrain = terrainFromName[nTile.name];
+
                 }
                 else
                 {

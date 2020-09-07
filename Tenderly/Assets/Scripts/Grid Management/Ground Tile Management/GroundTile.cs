@@ -20,4 +20,5 @@ public class GroundTile : ScriptableObject
 
 
     // TODO: Add terrain?
+    public Terrain Terrain { get; set; }
 }

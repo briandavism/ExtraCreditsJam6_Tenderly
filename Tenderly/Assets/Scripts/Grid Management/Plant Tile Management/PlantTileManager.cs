@@ -21,7 +21,9 @@ public class PlantTileManager : MonoBehaviour
     // For Plant Spawning Coroutine
     public float spawnTimer;
     public float spawnTimerFudged;
-    
+    public float spawnAnimationMinDelay;
+
+
     private void Awake()
     {
         if (instance == null)
@@ -56,14 +58,14 @@ public class PlantTileManager : MonoBehaviour
     }
 
 
-    // Use this for initialization
+    // Use this for initialization: All tiles on the map should be empty to start.
     private void GetPlantTiles()
     {
         foreach (Vector3Int pos in allTilePositions)
         {
             if (!plantTilemap.HasTile(pos)) continue;
 
-            Tile thisTile = gameData.GetComponent<LoadGameData>().plantTileFromName["Empty"];
+            Tile thisTile = plantTileFromName["Empty"];
             plantTilemap.SetTile(pos, thisTile);
 
             var tile = ScriptableObject.CreateInstance<PlantTile>();
@@ -72,7 +74,7 @@ public class PlantTileManager : MonoBehaviour
             tile.ThisTile = plantTilemap.GetTile<Tile>(pos);
             tile.TilemapMember = plantTilemap;
             tile.Name = pos.x + "," + pos.y;
-            tile.Plant = gameData.GetComponent<LoadGameData>().plantFromName["Empty"];
+            tile.Plant = plantFromName["Empty"];
 
             plantTileFromPosition.Add(tile.GridVector, tile);
         }
@@ -189,21 +191,35 @@ public class PlantTileManager : MonoBehaviour
                 }
             }
 
-            // Fudge with the spawnTimer
+            // Fudge with the spawnTimer ? 
+            /*
             int degrees = Mathf.RoundToInt(Time.time) % 360;
             spawnTimerFudged = 11 * Mathf.Cos(7 * degrees) + spawnTimer;
             yield return new WaitForSeconds(spawnTimerFudged);
+            */
+
+            // Otherwise, just wait the same time every time.
+            yield return new WaitForSeconds(spawnTimer);
+
         }
 
     }
 
 
-    // Delayed Tile Change: Water changes tiles, but tiles further away take longer.
+    // Delayed Plant Spawn: A plant will spawn on this tile but how long it takes is variable.
     IEnumerator DelayedPlantSpawn(Vector3Int tilePosition, Tile tile)
     {
-        float randomSpawn = Random.Range(1, spawnTimerFudged);
+        float randomSpawn = Random.Range(spawnAnimationMinDelay, spawnTimerFudged);
 
         yield return new WaitForSeconds(randomSpawn);
+
+        // 50/50 flip the plant over the x axis.
+        /*
+        if (Random.Range(0, 1) == 0)
+        {
+            // TODO: Flip the tile's sprite.
+        } 
+        */
 
         // We have a winner! Using the plantTilePalette dictionary, lookup the correct tile and plant it.
         // TODO: Add a spawn delay!
@@ -211,6 +227,9 @@ public class PlantTileManager : MonoBehaviour
 
         // Now that a plant spawned there, update the plantTileFromPosition dictionary.
         plantTileFromPosition[tilePosition].ThisTile = tile;
+
+        // Make sure to also update the plant
+        plantTileFromPosition[tilePosition].Plant = plantFromName[tile.name];
 
         // Be sure to check if this tile can merge!
         // TODO: Add a post-spawn merge check-delay!
@@ -236,10 +255,14 @@ public class PlantTileManager : MonoBehaviour
         Tile plantToClear = plantTileFromPosition[tilePosition].ThisTile;
         if (plantToClear != null && groundUnderPlant != null)
         {
+            // Update the tilemap to display the proper tile.
             plantTilemap.SetTile(tilePosition, plantTileFromName["Empty"]);
 
             // Now that there's no more plant here, update the plantTileFromPosition dictionary.
             plantTileFromPosition[tilePosition].ThisTile = plantTileFromName["Empty"];
+
+            // Make sure to also update the plant
+            plantTileFromPosition[tilePosition].Plant = plantFromName["Empty"];
         }
     }
 }
