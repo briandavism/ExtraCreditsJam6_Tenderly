@@ -17,12 +17,12 @@ public class PlantTileManager : MonoBehaviour
     public Dictionary<string, Tile> plantTileFromName = new Dictionary<string, Tile>();
     public Dictionary<string, Terrain> terrainFromName = new Dictionary<string, Terrain>();
     public Dictionary<string, Plant> plantFromName = new Dictionary<string, Plant>();
+    public List<Plant> plantList = new List<Plant>();
 
     // For Plant Spawning Coroutine
     public float spawnTimer;
     public float spawnTimerFudged;
     public float spawnAnimationMinDelay;
-
 
     private void Awake()
     {
@@ -43,14 +43,15 @@ public class PlantTileManager : MonoBehaviour
     void Start()
     {
         gridManager = gameObject.GetComponent<GridManager>();
-
-        groundTileFromPosition = gridManager.GetComponent<GroundTileManager>().groundTiles;
-        groundTileFromName = gameData.GetComponent<LoadGameData>().groundTileFromName;
-        plantTileFromName = gameData.GetComponent<LoadGameData>().plantTileFromName;
         allTilePositions = gridManager.allTilePositions;
-        terrainFromName = gameData.GetComponent<LoadGameData>().terrainFromName;
-        plantFromName = gameData.GetComponent<LoadGameData>().plantFromName;
 
+        LoadGameData loadGameData = gameData.GetComponent<LoadGameData>();
+        groundTileFromPosition = gridManager.GetComponent<GroundTileManager>().groundTiles;
+        groundTileFromName = loadGameData.groundTileFromName;
+        plantTileFromName = loadGameData.plantTileFromName;
+        terrainFromName = loadGameData.terrainFromName;
+        plantFromName = loadGameData.plantFromName;
+        plantList = loadGameData.plants;
         GetPlantTiles();
 
         // To start spawning things, call the SpawnPlants method, which will start a coroutine.
@@ -77,6 +78,27 @@ public class PlantTileManager : MonoBehaviour
             tile.Plant = plantFromName["Empty"];
 
             plantTileFromPosition.Add(tile.GridVector, tile);
+        }
+    }
+
+
+    /* Clear Plants:
+    * - Clear the tile under the cursor of plants, if any.
+    */
+    public void ClearPlants(Vector3Int tilePosition)
+    {
+        Tile groundUnderPlant = groundTileFromPosition[tilePosition].ThisTile;
+        Tile plantToClear = plantTileFromPosition[tilePosition].ThisTile;
+        if (plantToClear != null && groundUnderPlant != null)
+        {
+            // Update the tilemap to display the proper tile.
+            plantTilemap.SetTile(tilePosition, plantTileFromName["Empty"]);
+
+            // Now that there's no more plant here, update the plantTileFromPosition dictionary.
+            plantTileFromPosition[tilePosition].ThisTile = plantTileFromName["Empty"];
+
+            // Make sure to also update the plant
+            plantTileFromPosition[tilePosition].Plant = plantFromName["Empty"];
         }
     }
 
@@ -240,29 +262,219 @@ public class PlantTileManager : MonoBehaviour
     /* Merge:
      *  - Given a tile position, attempt to use it to merge into a new plant nearby.
      */
-    public void CheckForMerge(Vector3Int tilePosition)
+    public bool CheckForMerge(Vector3Int tilePosition)
     {
-        return;
+        // At this location, what's the plant tile?
+        PlantTile plantTile = plantTileFromPosition[tilePosition];
+
+        // What type of plant am I?
+        Plant plant = plantTile.Plant;
+
+        // Create empty list of potentialMerges
+        List<PlantTile> potentialMerges = new List<PlantTile>();
+
+        // Who are my neighboring triples?
+        List<List<Vector3Int>> tileTriples = GetClusters(tilePosition);
+        tileTriples.AddRange(GetTendrils(tilePosition));
+
+        // For every triple, check if it forms a valid recipe and add to completedRecipes list.
+        foreach (List<Vector3Int> triple in tileTriples)
+        {
+            // ValidRecipe should return a Plant if it found a valid merge, else a null.
+            PlantTile potentialMerge = ValidRecipe(triple);
+
+            // If ValidRecipe returned a name, ther was a valid recipe. If null, no recipe found for this triple.
+            if (potentialMerge != null)
+            {
+                potentialMerges.Add(potentialMerge);
+            }
+        }
+
+        // If there are no completedRecipes, we can terminate early.
+        if (potentialMerges.Count <= 0)
+        {
+            return false;
+        }
+
+        // Now that we have every valid merge, we just need to pick one from among them and complete the merge.
+        // First, pick one of the completedRecipes by some method. 
+        // TODO: By some other method than just random?
+        int randomInt = Random.Range(0, potentialMerges.Count);
+
+        PlantTile chosenMerge = potentialMerges[randomInt];
+
+        // TODO: Implement a merge delay.
+
+        // Update the tilemap with the new plant.
+        plantTilemap.SetTile(tilePosition, chosenMerge.ThisTile);
+
+        // Now we need to set the old PlantTile at tilePosition to be the chosenMerge
+        plantTileFromPosition[tilePosition] = chosenMerge;
+
+        
+
+        return true;
     }
 
 
-    /* Clear Plants:
-     * - Clear the tile under the cursor of plants, if any.
-     */
-    public void ClearPlants(Vector3Int tilePosition)
+    // Get Clusters: There are 15 unique clusters that form around a central tile.
+    // This method makes a list of them and returns them.
+    private static List<List<Vector3Int>> GetClusters(Vector3Int centerTilePosition)
     {
-        Tile groundUnderPlant = groundTileFromPosition[tilePosition].ThisTile;
-        Tile plantToClear = plantTileFromPosition[tilePosition].ThisTile;
-        if (plantToClear != null && groundUnderPlant != null)
+        List<List<Vector3Int>> tileClusters = new List<List<Vector3Int>>();
+
+        // The outer loop represents the 6 possible tiles that surround the central tile.
+        for (int i = 0; i < 6; i++)
         {
-            // Update the tilemap to display the proper tile.
-            plantTilemap.SetTile(tilePosition, plantTileFromName["Empty"]);
+            // Add the center tile since it will be part of every cluster.
+            List<Vector3Int> cluster = new List<Vector3Int>();
+            cluster.Add(centerTilePosition);
 
-            // Now that there's no more plant here, update the plantTileFromPosition dictionary.
-            plantTileFromPosition[tilePosition].ThisTile = plantTileFromName["Empty"];
+            // Add the first outer loop tile of this cluster, based on its position relative to center.
+            // That is, centerTilePosition + cubeDirections. Of course we have to convert to and from cube coords.
+            Vector3Int targetCubePosition = HexMath.cubeDirections[i] + HexMath.OddrToCube(centerTilePosition);
+            Vector3Int targetOddrPosition = HexMath.CubeToOddr(targetCubePosition);
+            cluster.Add(targetOddrPosition);
 
-            // Make sure to also update the plant
-            plantTileFromPosition[tilePosition].Plant = plantFromName["Empty"];
+            // The inner loop goes through each unique third tile addition to the group.
+            for (int j = i + 1; j < 6; j++)
+            {
+                // Add the inner loop tile of this cluster, based on its position relative to center.
+                // That is, centerTilePosition + cubeDirections. Of course we have to convert to and from cube coords.
+                targetCubePosition = HexMath.cubeDirections[j] + HexMath.OddrToCube(centerTilePosition);
+                targetOddrPosition = HexMath.CubeToOddr(targetCubePosition);
+                cluster.Add(targetOddrPosition);
+
+                // Now add this cluster of three tiles to the tileClusters list.
+                tileClusters.Add(cluster);
+            }
         }
+
+        return tileClusters;
+    }
+    
+
+    // Get Tendrils: There are 18 unique tendrils that form using a given tile as a base, not including the
+    // tendrils that are also considered clusters.
+    private static List<List<Vector3Int>> GetTendrils(Vector3Int baseTilePosition)
+    {
+        List<List<Vector3Int>> tileTendrils = new List<List<Vector3Int>>();
+
+        // The for loop represents the 6 possible tiles that surround the base tile.
+        for (int i = 0; i < 6; i++)
+        {
+            // Add the center tile since it will be part of every tendril.
+            List<Vector3Int> tendril = new List<Vector3Int>();
+            tendril.Add(baseTilePosition);
+
+            // Add this loop's tile to this tednril, based on its position relative to the base.
+            // That is, baseTilePosition + cubeDirections. Of course we have to convert to and from cube coords.
+            Vector3Int targetCubePosition = HexMath.cubeDirections[i] + HexMath.OddrToCube(baseTilePosition);
+            Vector3Int targetOddrPosition = HexMath.CubeToOddr(targetCubePosition);
+            tendril.Add(targetOddrPosition);
+
+            // The third tile slightly is more complicated. It can be in any three directions based on the initial
+            // direction, deviating by -1, 0, and +1, and making sure to wrap from -1 to 5.
+            for (int d = -1; d <= 1; d++)
+            {
+                int newDirection = ((i + d) % 6 + 6) % 6;
+                targetCubePosition = HexMath.cubeDirections[newDirection] + HexMath.OddrToCube(baseTilePosition);
+                targetOddrPosition = HexMath.CubeToOddr(targetCubePosition);
+                tendril.Add(targetOddrPosition);
+
+                // Now add this tendril of three tiles to the tileTendrils list.
+                tileTendrils.Add(tendril);
+            }
+        }
+
+        return tileTendrils;
+    }
+
+
+    // Given a list of three tiles, return the product of the recipe as a PlantTile if valid, null otherwise.
+    public PlantTile ValidRecipe(List<Vector3Int> triple)
+    {
+        Dictionary<string, int> recipe = new Dictionary<string, int>();
+
+        // For each location in the triple, add the name of the plant there to the recipe
+        foreach (Vector3Int tile in triple)
+        {
+            // If there is a plant at the tile location, get it's name.
+            if (plantTileFromPosition.ContainsKey(tile))
+            {
+                // TODO: REFACTOR this to remove the assumption that if there's an empty in the triple, it can't be valid.
+                if (plantTileFromPosition[tile].ThisTile.name.Equals("Empty", System.StringComparison.Ordinal))
+                {
+                    return null;
+                }
+
+
+                string key = plantTileFromPosition[tile].ThisTile.name;
+
+                // If this tile.name is new, add it to the dictionary, else increment by 1.
+                if (recipe.ContainsKey(key))
+                {
+                    recipe[key] += 1;
+                }
+                else
+                {
+                    recipe.Add(key, 1);
+                }
+            }
+            else
+            {
+                // If there wasn't a plant there, uh, well, just return?
+                return null;
+            }
+        }
+
+        // Now the recipe dictionary contains this triple recipe, but is it valid?
+        foreach (Plant plant in plantList)
+        {
+            // Does the recipe dictionary contain this plant's ingredient 1?
+            if (recipe.ContainsKey(plant.ingredient1))
+            {
+                // Does the recipe use the proper count of ingredient 2?
+                if (recipe[plant.ingredient1] != plant.count1)
+                {
+                    continue;
+                }
+            }
+            else
+            {
+                continue;
+            }
+
+            // Does the recipe dictionary contain this plant's ingredient 2?
+            if (recipe.ContainsKey(plant.ingredient2))
+            {
+                // Does the recipe use the proper count of ingredient 2?
+                if (recipe[plant.ingredient2] != plant.count1)
+                {
+                    continue;
+                }
+            }
+            else
+            {
+                continue;
+            }
+
+            // If we reach this far, then the recipe matches this plant's recipe!
+            // Pick one of the three tripes to form the new plant.
+            Vector3Int chosenPosition = triple[Random.Range(0, 3)];
+
+            // Make a new PlantTile with this plant.
+            var chosenPlantTile = ScriptableObject.CreateInstance<PlantTile>();
+            chosenPlantTile.GridVector = chosenPosition;
+            chosenPlantTile.WorldVector = plantTilemap.CellToWorld(chosenPosition);
+            chosenPlantTile.ThisTile = plantTileFromName[plant.name];
+            chosenPlantTile.TilemapMember = plantTilemap;
+            chosenPlantTile.Name = chosenPosition.x + "," + chosenPosition.y;
+            chosenPlantTile.Plant = plant;
+
+            return chosenPlantTile;
+        }
+
+        return null;
     }
 }
