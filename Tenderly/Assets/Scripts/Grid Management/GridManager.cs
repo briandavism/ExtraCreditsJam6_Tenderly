@@ -10,29 +10,28 @@ public class GridManager : MonoBehaviour
     // Public variables
     public Tilemap groundTiles;
     public Tilemap plantTiles;
-    // For Plant Spawning Coroutine
-    public float spawnTimer;
-    private List<Vector3Int> allTilePositions;
-    public GroundTilePallete groundTilePalette;
-    private Tile[] gTP;
-    public List<Tile> barrenPlants;
-    public List<Tile> soilPlants;
-    public List<Tile> marshPlants;
-    public List<Tile> waterPlants;
-    public Dictionary<Tile, List<Tile>> plantTilePalette;
+    // Loaded Game Data
+    public GameObject dataLoader;
+    public Dictionary<string, Tile> groundTileFromName = new Dictionary<string, Tile>();
+    public Dictionary<string, Tile> plantTileFromName = new Dictionary<string, Tile>();
+    public List<Terrain> terrains;
+    public List<Plant> plants;
+    public List<Vector3Int> allTilePositions;
+
     // For Plant Merging
     public float mergeDelay = 5.0f;
     public float spawnChance = 0.005f;
     // For Water Placement and Removal
     public GroundTileManager groundTileManager;
+    public PlantTileManager  plantTileManager;
+
 
     private void Awake()
     {
-        gTP = groundTilePalette.groundTilePallete;
         allTilePositions = new List<Vector3Int>();
-        foreach (var pos in plantTiles.cellBounds.allPositionsWithin)
+        foreach (var pos in groundTiles.cellBounds.allPositionsWithin)
         {
-            if (plantTiles.HasTile(pos))
+            if (groundTiles.HasTile(pos))
             {
                 allTilePositions.Add(pos);
             }
@@ -42,17 +41,10 @@ public class GridManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-
-        // Call dbug.
-        Dbug();
-
-        // To start spawning things, call the SpawnPlants method, which will start a coroutine.
-        plantTilePalette = new Dictionary<Tile, List<Tile>>();
-        plantTilePalette.Add(gTP[3], barrenPlants);
-        plantTilePalette.Add(gTP[2], soilPlants);
-        plantTilePalette.Add(gTP[1], marshPlants);
-        plantTilePalette.Add(gTP[0], waterPlants);
-        StartCoroutine(SpawnPeriodicPlants());
+        groundTileFromName = dataLoader.GetComponent<LoadGameData>().groundTileFromName;
+        plantTileFromName = dataLoader.GetComponent<LoadGameData>().plantTileFromName;
+        terrains = dataLoader.GetComponent<LoadGameData>().terrains;
+        plants = dataLoader.GetComponent<LoadGameData>().plants;
     }
 
     
@@ -108,7 +100,7 @@ public class GridManager : MonoBehaviour
     public bool PlaceWater(Vector3Int tileLocation)
     {
         // Only bother placing water if there isn't water already there.
-        if (groundTiles.GetTile<Tile>(tileLocation).sprite != gTP[0].sprite)
+        if (!groundTiles.GetTile<Tile>(tileLocation).name.Equals("Water", System.StringComparison.Ordinal))
         {
             groundTileManager.PlaceWater(tileLocation);
 
@@ -123,12 +115,13 @@ public class GridManager : MonoBehaviour
             return false;
         }
     }
+    
 
     // Remove Water: Should remove the tile and auto-adjust wetness level of surrounding ground tiles.
     public bool RemoveWater(Vector3Int tileLocation)
     {
         // Don't bother removing water if there isn't water already there.
-        if (groundTiles.GetTile<Tile>(tileLocation).sprite == gTP[0].sprite)
+        if (groundTiles.GetTile<Tile>(tileLocation).name.Equals("Water", System.StringComparison.Ordinal))
         {
             groundTileManager.RemoveWater(tileLocation);
             return true;
@@ -140,131 +133,13 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    // Spawning:
-    // Spawn New Plants:
-    IEnumerator SpawnPeriodicPlants()
-    {
-        while (true)
-        {
-            // Spawn plants on some tiles within spawnRadius originating from the mouse.
-            List<Tile> tiles = new List<Tile>();
-            foreach (Vector3Int tilePosition in allTilePositions)
-            {
-                Tile groundTile = groundTiles.GetTile<Tile>(tilePosition);
-
-                Tile plantTile = plantTiles.GetTile<Tile>(tilePosition);
-                tiles.Add(plantTile);
-
-                // If there is a ground tile and the tile has no plants...
-                if (groundTile != null && (plantTile is null || plantTile.name == "Empty"))
-                {
-                    List<Tile> spawnOptions = plantTilePalette[groundTile];
-                    float tempSpawnChance = spawnChance;
-                    switch (groundTile.name)
-                    {
-                        case "Barren":
-                            // Spawn something from the barren plant list.
-                            foreach (Tile tile in spawnOptions)
-                            {
-                                if ((Random.Range(0f, 1f)) < tempSpawnChance)
-                                {
-                                    plantTiles.SetTile(tilePosition, tile);
-                                    // Be sure to check if this tile can merge!
-                                    CheckForMerge(tilePosition);
-                                    break;
-                                } else
-                                {
-                                    tempSpawnChance = tempSpawnChance * 0.75f;
-                                }
-                            }
-                            break;
-                        case "Soil":
-                            // Spawn something from the soil plant list.
-                            foreach (Tile tile in spawnOptions)
-                            {
-                                if ((Random.Range(0f, 1f)) < tempSpawnChance)
-                                {
-                                    plantTiles.SetTile(tilePosition, tile);
-                                    // Be sure to check if this tile can merge!
-                                    CheckForMerge(tilePosition);
-                                    break;
-                                }
-                                else
-                                {
-                                    tempSpawnChance = tempSpawnChance * 0.75f;
-                                }
-                            }
-                            break;
-                        case "Marsh":
-                            // Spawn something from the marsh plant list.
-                            foreach (Tile tile in spawnOptions)
-                            {
-                                if ((Random.Range(0f, 1f)) < tempSpawnChance)
-                                {
-                                    plantTiles.SetTile(tilePosition, tile);
-                                    // Be sure to check if this tile can merge!
-                                    CheckForMerge(tilePosition);
-                                    break;
-                                }
-                                else
-                                {
-                                    tempSpawnChance = tempSpawnChance * 0.75f;
-                                }
-                            }
-                            break;
-                        case "Water":
-                            // Spawn something from the water plant list.
-                            foreach (Tile tile in spawnOptions)
-                            {
-                                if ((Random.Range(0f, 1f)) < tempSpawnChance)
-                                {
-                                    plantTiles.SetTile(tilePosition, tile);
-                                    // Be sure to check if this tile can merge!
-                                    CheckForMerge(tilePosition);
-                                    break;
-                                }
-                                else
-                                {
-                                    tempSpawnChance = tempSpawnChance * 0.75f;
-                                }
-                            }
-                            break;
-                    }
-                } 
-            }
-
-            yield return new WaitForSeconds(spawnTimer);
-        }
-        
-    }
-
 
     /* Merge:
      *  - Given a tile position, attempt to use it to merge into a new plant nearby.
      */
     public void CheckForMerge(Vector3Int tilePosition)
     {
-        return;
-        // Degbug
-        Debug.Log("Tile at: " + tilePosition + " will merge after " + mergeDelay + "seconds.");
-
-        // Hey MergeManager, given this tile's Vector3Int position, go try to merge it into a valid tile.
-        Vector3Int newPlantLocation = MergeManager.AttemptMerge(plantTiles, tilePosition);
-
-        Debug.Log("newplant at: " + newPlantLocation);
-
-
-        // 
-        if (newPlantLocation == null)
-        {
-            // Since there is a new tile, we want to check it for merges as well, but maybe after a little longer.
-            //CheckForMerge(newPlantLocation);
-        }
-
-        // If the MergeManager AttemptMerge() was successful, it should return a Vector3Int for the tile it
-        //  became (not necessarily the same as this tile's tilePosition. Since we want to wait a little bit 
-        //  before checking for merge again, we can start a coroutine to CheckForMerge of the new tile after 
-        //  some time has passed.
+        plantTileManager.CheckForMerge(tilePosition);
     }
 
 
@@ -273,25 +148,7 @@ public class GridManager : MonoBehaviour
      */
     public void ClearPlants(Vector3Int tilePosition)
     {
-        Tile grountUnderPlant = groundTiles.GetTile<Tile>(tilePosition);
-        Tile plantToClear = plantTiles.GetTile<Tile>(tilePosition);
-        if (plantToClear != null && grountUnderPlant != null)
-        {
-            plantTiles.SetTile(tilePosition, plantTilePalette[grountUnderPlant][0]);
-        }
+        plantTileManager.ClearPlants(tilePosition);
     }
 
-
-    // Is this tile the center of a recipie? If it is, grow it into something!
-    void GrowTile()//??? tile)
-    {
-        
-    }
-
-
-    // Debug and testing misc function.
-    private void Dbug()
-    {
-
-    }
 }
