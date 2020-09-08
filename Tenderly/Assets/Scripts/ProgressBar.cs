@@ -16,7 +16,7 @@ public class ProgressBar : MonoBehaviour
     private int NewWaterXP;
     private int pointsRemaining;
 
-    private int waterXpBase = 100;
+    private int waterXpBase = 10;
     private float waterXpExponent = 1.33f;
 
     // Create a property to handle the slider's value

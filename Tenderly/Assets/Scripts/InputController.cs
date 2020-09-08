@@ -24,7 +24,7 @@ public class InputController : MonoBehaviour
     private Tile hoverGroudTile;
     private Tile hoverPlantTile;
     // Tool Selection
-    public static string activeTool = "shovel";
+    public static string activeTool = "bucket";
     public Button setBucket;
     public Button setShovel;
     public Image BucketGlow;
