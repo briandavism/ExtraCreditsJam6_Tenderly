@@ -86,6 +86,9 @@ public class PlantTileManager : MonoBehaviour
         Tile plantToClear = plantTileFromPosition[tilePosition].ThisTile;
         if (plantToClear != null && groundUnderPlant != null)
         {
+            // Adjust the score! A plant was cleared, so the score should go down by the associated value.
+            Score.scoreCount -= plantTileFromPosition[tilePosition].Plant.score;
+
             // Update the tilemap to display the proper tile.
             plantTilemap.SetTile(tilePosition, plantTileFromName["Empty"]);
 
@@ -94,9 +97,6 @@ public class PlantTileManager : MonoBehaviour
 
             // Make sure to also update the plant
             plantTileFromPosition[tilePosition].Plant = plantFromName["Empty"];
-
-            // Adjust the score! A plant was cleared, so the score should go down by the associated value.
-            Score.scoreCount -= plantTileFromPosition[tilePosition].Plant.score;
         }
     }
 
@@ -249,6 +249,9 @@ public class PlantTileManager : MonoBehaviour
         // Make sure to also update the plant
         plantTileFromPosition[tilePosition].Plant = plantFromName[tile.name];
 
+        // Adjust the score! A plant was cleared, so the score should go down by the associated value.
+        Score.scoreCount += plantTileFromPosition[tilePosition].Plant.score;
+
         // Be sure to check if this tile can merge! 
         // ... but only if it isn't a deadplant
         if (!tile.name.Equals("DeadPlant", System.StringComparison.Ordinal))
@@ -314,6 +317,9 @@ public class PlantTileManager : MonoBehaviour
 
                 // Now we need to set the old PlantTile at tilePosition to be the chosenMerge
                 plantTileFromPosition[chosenMerge[i].GridVector] = chosenMerge[i];
+
+                // Adjust the score! A plant was cleared, so the score should go down by the associated value.
+                Score.scoreCount += plantTileFromPosition[tilePosition].Plant.score;
             }
             else
             {
