@@ -258,7 +258,7 @@ public class PlantTileManager : MonoBehaviour
         if (!tile.name.Equals("DeadPlant", System.StringComparison.Ordinal))
         {
             // TODO: Add a post-spawn merge check-delay!
-            yield return new WaitForSeconds(spawnTimer);
+            // yield return new WaitForSeconds(spawnTimer);
             CheckForMerge(tilePosition);
         }
     }
@@ -307,21 +307,32 @@ public class PlantTileManager : MonoBehaviour
         // First, pick one of the completedRecipes by some method. 
         // TODO: By some other method than just random?
         int randomInt = Random.Range(0, potentialMerges.Count);
-
         List<PlantTile> chosenMerge = potentialMerges[randomInt];
-        PlantTile chosenPlant = chosenMerge[Random.Range(0, 3)];
+        randomInt = Random.Range(0, 3);
+        for (int i = 0; i < 3; i++)
+        {
+            if (i == 1)
+            {
+                // Update the tilemap with the new plant.
+                plantTilemap.SetTile(chosenMerge[i].GridVector, chosenMerge[i].ThisTile);
+
+                // Now we need to set the old PlantTile at tilePosition to be the chosenMerge
+                plantTileFromPosition[chosenMerge[i].GridVector] = chosenMerge[i];
+            }
+            else
+            {
+                // Clear the plant off this location.
+                ClearPlants(chosenMerge[i].GridVector);
+            }
+        }
 
         // TODO: Implement a merge delay.
 
-        // Update the tilemap with the new plant.
-        plantTilemap.SetTile(tilePosition, chosenPlant.ThisTile);
-
-        // Now we need to set the old PlantTile at tilePosition to be the chosenMerge
-        plantTileFromPosition[tilePosition] = chosenPlant;
+        
 
         // Since this new tile might now be used for a different recipe, we need to check for another merge here.
         // TODO: Add a merge delay here too.
-        // CheckForMerge(tilePosition);
+        CheckForMerge(tilePosition);
 
         return true;
     }
@@ -365,7 +376,7 @@ public class PlantTileManager : MonoBehaviour
 
         return tileClusters;
     }
-    
+
 
     // Get Tendrils: There are 18 unique tendrils that form using a given tile as a base, not including the
     // tendrils that are also considered clusters.
@@ -481,7 +492,7 @@ public class PlantTileManager : MonoBehaviour
             {
                 continue;
             }
-            
+
             // If we reach this far, then the recipe matches this plant's recipe!
             // Make a PlantTile for each tile in the triple.
             List<PlantTile> chosenPlantTiles = new List<PlantTile>();
