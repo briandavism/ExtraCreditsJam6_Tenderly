@@ -62,8 +62,7 @@ public class PlantTileManager : MonoBehaviour
         {
             if (!plantTilemap.HasTile(pos)) continue;
 
-            Tile thisTile = plantTileFromName["Empty"];
-            plantTilemap.SetTile(pos, thisTile);
+            Tile thisTile = plantTilemap.GetTile<Tile>(pos);
 
             var tile = ScriptableObject.CreateInstance<PlantTile>();
             tile.GridVector = pos;
@@ -71,7 +70,7 @@ public class PlantTileManager : MonoBehaviour
             tile.ThisTile = plantTilemap.GetTile<Tile>(pos);
             tile.TilemapMember = plantTilemap;
             tile.Name = pos.x + "," + pos.y;
-            tile.Plant = plantFromName["Empty"];
+            tile.Plant = plantFromName[thisTile.name];
 
             plantTileFromPosition.Add(tile.GridVector, tile);
         }

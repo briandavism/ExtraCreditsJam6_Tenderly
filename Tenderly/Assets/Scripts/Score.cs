@@ -10,11 +10,6 @@ public class Score : MonoBehaviour
     private double timeCount = 0.0;
     private double pointThreshold = 0.1;
     
-    // Start is called before the first frame update
-    void Start()
-    {
-
-    }
 
     // Update is called once per frame
     void Update()
