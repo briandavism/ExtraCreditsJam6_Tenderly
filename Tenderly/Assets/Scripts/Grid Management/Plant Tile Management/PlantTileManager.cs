@@ -21,8 +21,6 @@ public class PlantTileManager : MonoBehaviour
 
     // For Plant Spawning Coroutine
     public float spawnTimer;
-    public float spawnTimerFudged;
-    public float spawnAnimationMinDelay;
 
     private void Awake()
     {
@@ -34,8 +32,6 @@ public class PlantTileManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
-
-        spawnTimerFudged = spawnTimer;
     }
 
 
@@ -125,7 +121,7 @@ public class PlantTileManager : MonoBehaviour
                             if ((Random.Range(0f, 1f)) < terrainFromName["Water"].spawnRate)
                             {
                                 // Which tile spawns? Get a random number from 1 to the totalSpawnChance
-                                int randomDrop = Random.Range(1, terrainFromName["Water"].totalSpawnChance);
+                                int randomDrop = Random.Range(1, terrainFromName["Water"].totalSpawnChance + 1);
 
                                 // Loop over each plant in the tarrain dropsDict and stop when randomDrop is <= 0
                                 foreach (KeyValuePair<string, int> kvp in terrainFromName["Water"].dropsDict)
@@ -148,7 +144,7 @@ public class PlantTileManager : MonoBehaviour
                             if ((Random.Range(0f, 1f)) < terrainFromName["Marsh"].spawnRate)
                             {
                                 // Which tile spawns? Get a random number from 1 to the totalSpawnChance
-                                int randomDrop = Random.Range(1, terrainFromName["Marsh"].totalSpawnChance);
+                                int randomDrop = Random.Range(1, terrainFromName["Marsh"].totalSpawnChance + 1);
 
                                 // Loop over each plant in the tarrain dropsDict and stop when randomDrop is <= 0
                                 foreach (KeyValuePair<string, int> kvp in terrainFromName["Marsh"].dropsDict)
@@ -170,7 +166,7 @@ public class PlantTileManager : MonoBehaviour
                             if ((Random.Range(0f, 1f)) < terrainFromName["Soil"].spawnRate)
                             {
                                 // Which tile spawns? Get a random number from 1 to the totalSpawnChance
-                                int randomDrop = Random.Range(1, terrainFromName["Soil"].totalSpawnChance);
+                                int randomDrop = Random.Range(1, terrainFromName["Soil"].totalSpawnChance + 1);
 
                                 // Loop over each plant in the tarrain dropsDict and stop when randomDrop is <= 0
                                 foreach (KeyValuePair<string, int> kvp in terrainFromName["Soil"].dropsDict)
@@ -192,7 +188,7 @@ public class PlantTileManager : MonoBehaviour
                             if ((Random.Range(0f, 1f)) < terrainFromName["Barren"].spawnRate)
                             {
                                 // Which tile spawns? Get a random number from 1 to the totalSpawnChance
-                                int randomDrop = Random.Range(1, terrainFromName["Barren"].totalSpawnChance);
+                                int randomDrop = Random.Range(1, terrainFromName["Barren"].totalSpawnChance + 1);
 
                                 // Loop over each plant in the tarrain dropsDict and stop when randomDrop is <= 0
                                 foreach (KeyValuePair<string, int> kvp in terrainFromName["Barren"].dropsDict)
@@ -231,9 +227,7 @@ public class PlantTileManager : MonoBehaviour
     // Delayed Plant Spawn: A plant will spawn on this tile but how long it takes is variable.
     IEnumerator DelayedPlantSpawn(Vector3Int tilePosition, Tile tile)
     {
-        float randomSpawn = Random.Range(spawnAnimationMinDelay, spawnTimerFudged);
-
-        yield return new WaitForSeconds(randomSpawn);
+        yield return new WaitForSeconds(Random.Range(0, spawnTimer));
 
         // 50/50 flip the plant over the x axis.
         /*
