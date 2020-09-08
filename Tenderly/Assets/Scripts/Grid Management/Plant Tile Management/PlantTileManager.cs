@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using UnityEngine.Assertions;
 
 public class PlantTileManager : MonoBehaviour
 {
@@ -300,14 +301,13 @@ public class PlantTileManager : MonoBehaviour
             return false;
         }
 
-
-
         // Now that we have every valid merge, we just need to pick one from among them and complete the merge.
         // First, pick one of the completedRecipes by some method. 
         // TODO: By some other method than just random?
         int randomInt = Random.Range(0, potentialMerges.Count);
         List<PlantTile> chosenMerge = potentialMerges[randomInt];
         randomInt = Random.Range(0, 3);
+        Vector3Int checkAfter = new Vector3Int();
         for (int i = 0; i < 3; i++)
         {
             if (i == 1)
@@ -320,6 +320,8 @@ public class PlantTileManager : MonoBehaviour
 
                 // Adjust the score! A plant was cleared, so the score should go down by the associated value.
                 Score.scoreCount += plantTileFromPosition[tilePosition].Plant.score;
+
+                checkAfter = chosenMerge[i].GridVector;
             }
             else
             {
@@ -330,12 +332,10 @@ public class PlantTileManager : MonoBehaviour
 
         // TODO: Implement a merge delay.
 
-        
 
         // Since this new tile might now be used for a different recipe, we need to check for another merge here.
         // TODO: Add a merge delay here too.
-        CheckForMerge(tilePosition);
-
+        CheckForMerge(checkAfter);
         return true;
     }
 
@@ -437,22 +437,27 @@ public class PlantTileManager : MonoBehaviour
                     return null;
                 }
 
-
                 string key = plantTileFromPosition[tile].ThisTile.name;
 
                 // If this tile.name is new, add it to the dictionary, else increment by 1.
                 if (recipe.ContainsKey(key))
                 {
+                    Assert.AreEqual(key, plantTilemap.GetTile(tile).name);
+                    Assert.AreEqual(plantTileFromPosition[tile].ThisTile, plantTilemap.GetTile(tile));
+
                     recipe[key] += 1;
                 }
                 else
                 {
+                    Assert.AreEqual(key, plantTilemap.GetTile(tile).name);
+                    Assert.AreEqual(plantTileFromPosition[tile].ThisTile, plantTilemap.GetTile(tile));
                     recipe.Add(key, 1);
                 }
             }
             else
             {
                 // If there wasn't a plant there, uh, well, just return?
+                Debug.Log("If there wasn't a plant there, uh, well, just return?");
                 return null;
             }
         }
@@ -463,16 +468,9 @@ public class PlantTileManager : MonoBehaviour
             // Does the recipe dictionary contain this plant's ingredient 1?
             if (recipe.ContainsKey(plant.ingredient1))
             {
-                // Does the recipe use the proper count of ingredient 2?
+                // Does the recipe use the proper count of ingredient 1?
                 if (recipe[plant.ingredient1] != plant.count1)
                 {
-
-                    if (plant.name.Equals("WaterLily", System.StringComparison.Ordinal))
-                    {
-                        //Debug.Log("recipe[plant.ingredient1]: " + recipe[plant.ingredient1]);
-                    }
-
-
                     continue;
                 }
             }
@@ -482,7 +480,7 @@ public class PlantTileManager : MonoBehaviour
             }
 
             // Does the recipe dictionary contain this plant's ingredient 2?
-            if (recipe.ContainsKey(plant.ingredient2))
+            if (plant.ingredient2 != null && recipe.ContainsKey(plant.ingredient2))
             {
                 // Does the recipe use the proper count of ingredient 2?
                 if (recipe[plant.ingredient2] != plant.count2)
@@ -490,7 +488,7 @@ public class PlantTileManager : MonoBehaviour
                     continue;
                 }
             }
-            else
+            else if (plant.ingredient2 == null && recipe.Count > 1)
             {
                 continue;
             }
