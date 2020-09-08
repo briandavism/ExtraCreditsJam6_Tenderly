@@ -18,9 +18,6 @@ public class GridManager : MonoBehaviour
     public List<Plant> plants;
     public List<Vector3Int> allTilePositions;
 
-    // For Plant Merging
-    public float mergeDelay = 5.0f;
-    public float spawnChance = 0.005f;
     // For Water Placement and Removal
     public GroundTileManager groundTileManager;
     public PlantTileManager  plantTileManager;
