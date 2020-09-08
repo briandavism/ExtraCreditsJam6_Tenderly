@@ -258,7 +258,7 @@ public class PlantTileManager : MonoBehaviour
         if (!tile.name.Equals("DeadPlant", System.StringComparison.Ordinal))
         {
             // TODO: Add a post-spawn merge check-delay!
-            // yield return new WaitForSeconds(spawnTimer);
+            yield return new WaitForSeconds(spawnTimer);
             CheckForMerge(tilePosition);
         }
     }

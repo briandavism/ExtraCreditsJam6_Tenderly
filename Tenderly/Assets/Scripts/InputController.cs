@@ -30,7 +30,7 @@ public class InputController : MonoBehaviour
     public Image BucketGlow;
     public Image ShovelGlow;
     public static bool disableTool = false;
-    public RectTransform toolContainer;
+    public List<RectTransform> disableMouseOver;
     public RectTransform canvasRT;
 
     // Water Placement
@@ -201,16 +201,25 @@ public class InputController : MonoBehaviour
         // Get mouse position in the world.
         Vector3 mousePosInWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
 
-        // Get toolContainer corners
-        Vector3[] corners = new Vector3[4];
-        toolContainer.GetWorldCorners(corners);
-        Vector3 topLeft = corners[0];
+        // For each rect transform in disableMouseOver:
+        foreach (RectTransform rT in disableMouseOver)
+        {
+            // Get toolContainer corners
+            Vector3[] corners = new Vector3[4];
+            rT.GetWorldCorners(corners);
+            Vector3 topLeft = corners[0];
 
-        // Scale the toolContainer Rect Transform to the canvas.
-        Vector2 scale = canvasRT.localScale;
-        Vector2 scaledSize = new Vector2(scale.x * toolContainer.rect.size.x, scale.y * toolContainer.rect.size.y);
-        Rect scaledToolContainer = new Rect(topLeft, scaledSize);
+            // Scale the toolContainer Rect Transform to the canvas.
+            Vector2 scale = canvasRT.localScale;
+            Vector2 scaledSize = new Vector2(scale.x * rT.rect.size.x, scale.y * rT.rect.size.y);
+            Rect scaledToolContainer = new Rect(topLeft, scaledSize);
 
-        return scaledToolContainer.Contains(mousePosInWorld);
+            if (scaledToolContainer.Contains(mousePosInWorld))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
