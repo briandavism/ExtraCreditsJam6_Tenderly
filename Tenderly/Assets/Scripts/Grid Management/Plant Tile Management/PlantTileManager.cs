@@ -94,6 +94,9 @@ public class PlantTileManager : MonoBehaviour
 
             // Make sure to also update the plant
             plantTileFromPosition[tilePosition].Plant = plantFromName["Empty"];
+
+            // Adjust the score! A plant was cleared, so the score should go down by the associated value.
+            Score.scoreCount -= plantTileFromPosition[tilePosition].Plant.score;
         }
     }
 
