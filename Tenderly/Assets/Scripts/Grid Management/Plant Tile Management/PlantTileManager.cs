@@ -253,9 +253,14 @@ public class PlantTileManager : MonoBehaviour
         // Make sure to also update the plant
         plantTileFromPosition[tilePosition].Plant = plantFromName[tile.name];
 
-        // Be sure to check if this tile can merge!
-        // TODO: Add a post-spawn merge check-delay!
-        CheckForMerge(tilePosition);
+        // Be sure to check if this tile can merge! 
+        // ... but only if it isn't a deadplant
+        if (!tile.name.Equals("DeadPlant", System.StringComparison.Ordinal))
+        {
+            // TODO: Add a post-spawn merge check-delay!
+            yield return new WaitForSeconds(randomSpawn);
+            CheckForMerge(tilePosition);
+        }
     }
 
 
@@ -271,7 +276,7 @@ public class PlantTileManager : MonoBehaviour
         Plant plant = plantTile.Plant;
 
         // Create empty list of potentialMerges
-        List<PlantTile> potentialMerges = new List<PlantTile>();
+        List<List<PlantTile>> potentialMerges = new List<List<PlantTile>>();
 
         // Who are my neighboring triples?
         List<List<Vector3Int>> tileTriples = GetClusters(tilePosition);
@@ -281,7 +286,7 @@ public class PlantTileManager : MonoBehaviour
         foreach (List<Vector3Int> triple in tileTriples)
         {
             // ValidRecipe should return a Plant if it found a valid merge, else a null.
-            PlantTile potentialMerge = ValidRecipe(triple);
+            List<PlantTile> potentialMerge = ValidRecipe(triple);
 
             // If ValidRecipe returned a name, ther was a valid recipe. If null, no recipe found for this triple.
             if (potentialMerge != null)
@@ -290,28 +295,33 @@ public class PlantTileManager : MonoBehaviour
             }
         }
 
-        // If there are no completedRecipes, we can terminate early.
-        if (potentialMerges.Count <= 0)
+        // If there are no potentialMerges, we can terminate early.
+        if (potentialMerges.Count <= 0 || potentialMerges == null)
         {
             return false;
         }
+
+
 
         // Now that we have every valid merge, we just need to pick one from among them and complete the merge.
         // First, pick one of the completedRecipes by some method. 
         // TODO: By some other method than just random?
         int randomInt = Random.Range(0, potentialMerges.Count);
 
-        PlantTile chosenMerge = potentialMerges[randomInt];
+        List<PlantTile> chosenMerge = potentialMerges[randomInt];
+        PlantTile chosenPlant = chosenMerge[Random.Range(0, 3)];
 
         // TODO: Implement a merge delay.
 
         // Update the tilemap with the new plant.
-        plantTilemap.SetTile(tilePosition, chosenMerge.ThisTile);
+        plantTilemap.SetTile(tilePosition, chosenPlant.ThisTile);
 
         // Now we need to set the old PlantTile at tilePosition to be the chosenMerge
-        plantTileFromPosition[tilePosition] = chosenMerge;
+        plantTileFromPosition[tilePosition] = chosenPlant;
 
-        
+        // Since this new tile might now be used for a different recipe, we need to check for another merge here.
+        // TODO: Add a merge delay here too.
+        // CheckForMerge(tilePosition);
 
         return true;
     }
@@ -339,14 +349,17 @@ public class PlantTileManager : MonoBehaviour
             // The inner loop goes through each unique third tile addition to the group.
             for (int j = i + 1; j < 6; j++)
             {
+                List<Vector3Int> triple = new List<Vector3Int>();
+
                 // Add the inner loop tile of this cluster, based on its position relative to center.
                 // That is, centerTilePosition + cubeDirections. Of course we have to convert to and from cube coords.
                 targetCubePosition = HexMath.cubeDirections[j] + HexMath.OddrToCube(centerTilePosition);
                 targetOddrPosition = HexMath.CubeToOddr(targetCubePosition);
-                cluster.Add(targetOddrPosition);
+                triple.Add(targetOddrPosition);
+                triple.AddRange(cluster);
 
                 // Now add this cluster of three tiles to the tileClusters list.
-                tileClusters.Add(cluster);
+                tileClusters.Add(triple);
             }
         }
 
@@ -377,13 +390,16 @@ public class PlantTileManager : MonoBehaviour
             // direction, deviating by -1, 0, and +1, and making sure to wrap from -1 to 5.
             for (int d = -1; d <= 1; d++)
             {
+                List<Vector3Int> triple = new List<Vector3Int>();
+
                 int newDirection = ((i + d) % 6 + 6) % 6;
                 targetCubePosition = HexMath.cubeDirections[newDirection] + HexMath.OddrToCube(baseTilePosition);
                 targetOddrPosition = HexMath.CubeToOddr(targetCubePosition);
-                tendril.Add(targetOddrPosition);
+                triple.Add(targetOddrPosition);
+                triple.AddRange(tendril);
 
                 // Now add this tendril of three tiles to the tileTendrils list.
-                tileTendrils.Add(tendril);
+                tileTendrils.Add(triple);
             }
         }
 
@@ -392,7 +408,7 @@ public class PlantTileManager : MonoBehaviour
 
 
     // Given a list of three tiles, return the product of the recipe as a PlantTile if valid, null otherwise.
-    public PlantTile ValidRecipe(List<Vector3Int> triple)
+    public List<PlantTile> ValidRecipe(List<Vector3Int> triple)
     {
         Dictionary<string, int> recipe = new Dictionary<string, int>();
 
@@ -437,6 +453,13 @@ public class PlantTileManager : MonoBehaviour
                 // Does the recipe use the proper count of ingredient 2?
                 if (recipe[plant.ingredient1] != plant.count1)
                 {
+
+                    if (plant.name.Equals("WaterLily", System.StringComparison.Ordinal))
+                    {
+                        //Debug.Log("recipe[plant.ingredient1]: " + recipe[plant.ingredient1]);
+                    }
+
+
                     continue;
                 }
             }
@@ -449,7 +472,7 @@ public class PlantTileManager : MonoBehaviour
             if (recipe.ContainsKey(plant.ingredient2))
             {
                 // Does the recipe use the proper count of ingredient 2?
-                if (recipe[plant.ingredient2] != plant.count1)
+                if (recipe[plant.ingredient2] != plant.count2)
                 {
                     continue;
                 }
@@ -458,23 +481,28 @@ public class PlantTileManager : MonoBehaviour
             {
                 continue;
             }
-
+            
             // If we reach this far, then the recipe matches this plant's recipe!
-            // Pick one of the three tripes to form the new plant.
-            Vector3Int chosenPosition = triple[Random.Range(0, 3)];
+            // Make a PlantTile for each tile in the triple.
+            List<PlantTile> chosenPlantTiles = new List<PlantTile>();
+            foreach (Vector3Int tile in triple)
+            {
+                // Make a new PlantTile with this plant.
+                var chosenPlantTile = ScriptableObject.CreateInstance<PlantTile>();
+                chosenPlantTile.GridVector = tile;
+                chosenPlantTile.WorldVector = plantTilemap.CellToWorld(tile);
+                chosenPlantTile.ThisTile = plantTileFromName[plant.name];
+                chosenPlantTile.TilemapMember = plantTilemap;
+                chosenPlantTile.Name = tile.x + "," + tile.y;
+                chosenPlantTile.Plant = plant;
 
-            // Make a new PlantTile with this plant.
-            var chosenPlantTile = ScriptableObject.CreateInstance<PlantTile>();
-            chosenPlantTile.GridVector = chosenPosition;
-            chosenPlantTile.WorldVector = plantTilemap.CellToWorld(chosenPosition);
-            chosenPlantTile.ThisTile = plantTileFromName[plant.name];
-            chosenPlantTile.TilemapMember = plantTilemap;
-            chosenPlantTile.Name = chosenPosition.x + "," + chosenPosition.y;
-            chosenPlantTile.Plant = plant;
+                chosenPlantTiles.Add(chosenPlantTile);
+            }
 
-            return chosenPlantTile;
+            return chosenPlantTiles;
         }
 
         return null;
     }
+
 }
